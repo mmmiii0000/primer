@@ -383,6 +383,57 @@
       font-size: 13px;
     }
 
+
+    /* Primer結果表はすべて中央揃え */
+    #result table th,
+    #result table td {
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    #result table .sequence {
+      text-align: center;
+    }
+
+    .primer-cell-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .extend-button {
+      width: auto;
+      margin-top: 4px;
+      padding: 6px 10px;
+      border: 1px solid #cfd8f6;
+      border-radius: 8px;
+      color: var(--primary);
+      background: #ffffff;
+      box-shadow: none;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .extend-button:hover {
+      transform: none;
+      background: var(--primary-soft);
+      box-shadow: none;
+    }
+
+    .extend-button:disabled {
+      color: #98a2b3;
+      background: #f3f4f6;
+      border-color: #e4e7ec;
+      cursor: default;
+    }
+
+    .extended-row {
+      background: #fbfcff;
+    }
+
   </style>
 
 </head>
@@ -803,7 +854,11 @@ function createPrimerPair(originalSequence, codonStart, mutantCodon) {
   return {
     primerF,
     primerR,
-    mutatedSequence
+    mutatedSequence,
+    forwardStart,
+    forwardEnd,
+    reverseStart,
+    reverseEnd
   };
 }
 
@@ -827,6 +882,274 @@ function highlightMutation(primer) {
     mutation +
     '</span>' +
     after
+  );
+}
+
+
+/* =========================================================
+   Primerを「次のG/C」まで3'側へ延長する
+========================================================= */
+
+/*
+  Primer F：
+  coding strandの右方向へ進み、
+  現在の3'末端よりさらに先にある最初のG/Cまで延長
+*/
+function extendForwardToNextGC(data) {
+
+  let position = data.forwardEnd;
+
+  while (
+    position < data.mutatedSequence.length &&
+    data.mutatedSequence[position] !== "G" &&
+    data.mutatedSequence[position] !== "C"
+  ) {
+    position++;
+  }
+
+  if (position >= data.mutatedSequence.length) {
+    return null;
+  }
+
+  const newForwardEnd = position + 1;
+
+  return {
+    primerF:
+      data.mutatedSequence.slice(
+        data.forwardStart,
+        newForwardEnd
+      ),
+
+    forwardEnd: newForwardEnd
+  };
+}
+
+
+/*
+  Primer R：
+  Primerの3'側を延長することは、
+  coding strand上では左（5'側）へ進むことに相当する。
+  その方向で次のG/Cまで延長してからreverse complementする。
+*/
+function extendReverseToNextGC(data) {
+
+  let position = data.reverseStart - 1;
+
+  while (
+    position >= 0 &&
+    data.mutatedSequence[position] !== "G" &&
+    data.mutatedSequence[position] !== "C"
+  ) {
+    position--;
+  }
+
+  if (position < 0) {
+    return null;
+  }
+
+  const newReverseStart = position;
+
+  const reverseTemplate =
+    data.mutatedSequence.slice(
+      newReverseStart,
+      data.reverseEnd
+    );
+
+  return {
+    primerR:
+      reverseComplement(reverseTemplate),
+
+    reverseStart: newReverseStart
+  };
+}
+
+
+/* 各表示行のPrimer情報を保持 */
+let primerRowData = {};
+let primerVariantCounters = {};
+
+
+/*
+  Primerセル内の表示を作る
+*/
+function makePrimerCell(primer, rowId, direction) {
+
+  return `
+    <div class="primer-cell-content">
+      <div>
+        ${highlightMutation(primer)}
+      </div>
+
+      <button
+        type="button"
+        class="extend-button"
+        onclick="extendPrimerRow('${rowId}', '${direction}', this)"
+      >
+        次のG/Cまで延長する
+      </button>
+    </div>
+  `;
+}
+
+
+/*
+  延長ボタンを押したとき、
+  元の候補の下に 1-2、1-3... の行を追加する
+*/
+function extendPrimerRow(rowId, direction, button) {
+
+  const source =
+    primerRowData[rowId];
+
+  if (!source) {
+    return;
+  }
+
+
+  let newData = {
+    ...source
+  };
+
+
+  if (direction === "F") {
+
+    const extended =
+      extendForwardToNextGC(source);
+
+    if (!extended) {
+      button.disabled = true;
+      button.textContent = "これ以上G/Cなし";
+      return;
+    }
+
+    newData.primerF =
+      extended.primerF;
+
+    newData.forwardEnd =
+      extended.forwardEnd;
+
+  } else {
+
+    const extended =
+      extendReverseToNextGC(source);
+
+    if (!extended) {
+      button.disabled = true;
+      button.textContent = "これ以上G/Cなし";
+      return;
+    }
+
+    newData.primerR =
+      extended.primerR;
+
+    newData.reverseStart =
+      extended.reverseStart;
+  }
+
+
+  /* 同じ行から同じ方向への重複追加を防ぐ */
+  button.disabled = true;
+  button.textContent = "延長済み";
+
+
+  const rootNo =
+    source.rootNo;
+
+  if (!primerVariantCounters[rootNo]) {
+    primerVariantCounters[rootNo] = 1;
+  }
+
+  primerVariantCounters[rootNo]++;
+
+  const variantNo =
+    primerVariantCounters[rootNo];
+
+  const displayNo =
+    `${rootNo}-${variantNo}`;
+
+  const newRowId =
+    `primer-row-${rootNo}-${variantNo}`;
+
+
+  newData.rowId =
+    newRowId;
+
+  newData.displayNo =
+    displayNo;
+
+  primerRowData[newRowId] =
+    newData;
+
+
+  const tmF =
+    calculateTm(newData.primerF.slice(9));
+
+  const tmR =
+    calculateTm(newData.primerR.slice(9));
+
+
+  const newRowHtml = `
+    <tr
+      class="extended-row"
+      id="${newRowId}"
+      data-root-no="${rootNo}"
+    >
+      <td>${displayNo}</td>
+
+      <td class="sequence">
+        ${newData.mutantCodon}
+      </td>
+
+      <td>
+        ${newData.usagePercent}%
+      </td>
+
+      <td>
+        ${newData.baseChanges}
+      </td>
+
+      <td class="sequence">
+        ${makePrimerCell(
+          newData.primerF,
+          newRowId,
+          "F"
+        )}
+      </td>
+
+      <td class="tm-value">
+        ${tmF.toFixed(1)}
+      </td>
+
+      <td class="sequence">
+        ${makePrimerCell(
+          newData.primerR,
+          newRowId,
+          "R"
+        )}
+      </td>
+
+      <td class="tm-value">
+        ${tmR.toFixed(1)}
+      </td>
+    </tr>
+  `;
+
+
+  /*
+    同じNo.グループの一番最後に追加する。
+    例：1 → 1-2 → 1-3
+  */
+  const rows =
+    document.querySelectorAll(
+      `tr[data-root-no="${rootNo}"]`
+    );
+
+  const lastRow =
+    rows[rows.length - 1];
+
+  lastRow.insertAdjacentHTML(
+    "afterend",
+    newRowHtml
   );
 }
 
@@ -856,6 +1179,9 @@ document
       document.getElementById("result");
 
     result.innerHTML = "";
+
+    primerRowData = {};
+    primerVariantCounters = {};
 
     const sequence =
       cleanSequence(
@@ -1024,9 +1350,41 @@ document
         const tmR =
           calculateTm(primers.primerR.slice(9));
 
+        const rootNo =
+          index + 1;
+
+        const rowId =
+          `primer-row-${rootNo}`;
+
+        primerVariantCounters[rootNo] = 1;
+
+        primerRowData[rowId] = {
+          rowId: rowId,
+          rootNo: rootNo,
+          displayNo: String(rootNo),
+
+          mutantCodon: mutantCodon,
+          usagePercent: usagePercent,
+          baseChanges: baseChanges,
+
+          primerF: primers.primerF,
+          primerR: primers.primerR,
+
+          mutatedSequence: primers.mutatedSequence,
+
+          forwardStart: primers.forwardStart,
+          forwardEnd: primers.forwardEnd,
+
+          reverseStart: primers.reverseStart,
+          reverseEnd: primers.reverseEnd
+        };
+
         html += `
-          <tr>
-            <td>${index + 1}</td>
+          <tr
+            id="${rowId}"
+            data-root-no="${rootNo}"
+          >
+            <td>${rootNo}</td>
 
             <td class="sequence">
               ${mutantCodon}
@@ -1041,7 +1399,11 @@ document
             </td>
 
             <td class="sequence">
-              ${highlightMutation(primers.primerF)}
+              ${makePrimerCell(
+                primers.primerF,
+                rowId,
+                "F"
+              )}
             </td>
 
             <td class="tm-value">
@@ -1049,7 +1411,11 @@ document
             </td>
 
             <td class="sequence">
-              ${highlightMutation(primers.primerR)}
+              ${makePrimerCell(
+                primers.primerR,
+                rowId,
+                "R"
+              )}
             </td>
 
             <td class="tm-value">
