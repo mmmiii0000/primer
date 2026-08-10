@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Primer Designer</title>
+
+  
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --text: #172033;
+      --muted: #667085;
+      --line: #dce3ec;
+      --primary: #3157d5;
+      --primary-hover: #2648b8;
+      --primary-soft: #eef2ff;
+      --danger: #d92d20;
+      --danger-soft: #fff2f0;
+      --success-soft: #eefbf3;
+      --shadow: 0 18px 45px rgba(25, 42, 70, 0.10);
+      --radius-lg: 22px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 48px 20px 72px;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(49, 87, 213, 0.10), transparent 32%),
+        linear-gradient(180deg, #f8faff 0%, var(--bg) 100%);
+      font-family:
+        Inter,
+        "Hiragino Sans",
+        "Yu Gothic UI",
+        "Yu Gothic",
+        Meiryo,
+        sans-serif;
+      line-height: 1.6;
+    }
+
+    .container {
+      width: min(1100px, 100%);
+      margin: 0 auto;
+      padding: 36px;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(220, 227, 236, 0.9);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+
+    h1 {
+      margin: 0;
+      text-align: left;
+      font-size: clamp(30px, 5vw, 44px);
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+    }
+
+    h1::after {
+      content: "Mutagenesis primer design tool";
+      display: block;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    h2 {
+      margin: 32px 0 12px;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .sequence-note {
+      margin: -2px 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    textarea,
+    input {
+      border: 1px solid var(--line);
+      outline: none;
+      transition:
+        border-color 0.18s ease,
+        box-shadow 0.18s ease,
+        background-color 0.18s ease;
+    }
+
+    textarea:focus,
+    input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(49, 87, 213, 0.12);
+      background-color: #fff;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 210px;
+      padding: 18px;
+      border-radius: var(--radius-md);
+      background: var(--surface-soft);
+      font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        Menlo,
+        monospace;
+      font-size: 14px;
+      line-height: 1.75;
+      resize: vertical;
+    }
+
+    textarea::placeholder,
+    input::placeholder {
+      color: #98a2b3;
+    }
+
+    .mutation-row {
+      display: grid;
+      grid-template-columns: 110px auto 74px auto 74px auto;
+      gap: 10px;
+      align-items: center;
+      padding: 18px;
+      background: var(--surface-soft);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      font-size: 16px;
+    }
+
+    .position-input,
+    .aa-input {
+      width: 100%;
+      min-width: 0;
+      height: 46px;
+      padding: 0 12px;
+      background: #fff;
+      border-radius: var(--radius-sm);
+      font-size: 16px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .aa-input {
+      text-transform: uppercase;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 24px;
+      padding: 15px 22px;
+      border: 0;
+      border-radius: var(--radius-md);
+      color: #fff;
+      background: linear-gradient(135deg, #3157d5, #466ee8);
+      box-shadow: 0 10px 20px rgba(49, 87, 213, 0.22);
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition:
+        transform 0.16s ease,
+        box-shadow 0.16s ease,
+        background 0.16s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 13px 24px rgba(49, 87, 213, 0.28);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    #result {
+      margin-top: 30px;
+    }
+
+    .info {
+      margin-top: 0;
+      padding: 18px 20px;
+      background: var(--primary-soft);
+      border: 1px solid #d9e0ff;
+      border-radius: var(--radius-md);
+      color: #26345f;
+      line-height: 1.9;
+    }
+
+    .error {
+      margin-top: 0;
+      padding: 16px 18px;
+      color: #8a1c15;
+      background: var(--danger-soft);
+      border: 1px solid #ffcbc7;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 18px;
+      border-collapse: separate;
+      border-spacing: 0;
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      box-shadow: 0 8px 24px rgba(25, 42, 70, 0.06);
+    }
+
+    th,
+    td {
+      padding: 15px 16px;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th:last-child,
+    td:last-child {
+      border-right: 0;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    th {
+      color: #475467;
+      background: #f8fafc;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      transition: background-color 0.16s ease;
+    }
+
+    tbody tr:hover {
+      background: #fbfcff;
+    }
+
+    .sequence {
+      font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        Menlo,
+        monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      word-break: break-all;
+      letter-spacing: 0.02em;
+    }
+
+    .mutated {
+      font-weight: 700;
+      text-decoration: underline;
+    }
+
+    .mutation-codon {
+      display: inline-block;
+      padding: 0 3px;
+      color: var(--danger);
+      background: #fff0ee;
+      border-radius: 4px;
+      font-weight: 900;
+    }
+
+    @media (max-width: 760px) {
+      body {
+        padding: 20px 12px 40px;
+      }
+
+      .container {
+        padding: 24px 18px;
+        border-radius: 18px;
+      }
+
+      .mutation-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .mutation-row span {
+        text-align: center;
+      }
+
+      table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+
+      th,
+      td {
+        min-width: 110px;
+      }
+
+      td.sequence {
+        min-width: 260px;
+        white-space: normal;
+      }
+    }
+  </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+  <h1>Primer Designer</h1>
+
+
+  <!-- DNA配列 -->
+  <h2>塩基配列（全長）を入力</h2>
+
+  
+  <textarea
+    id="sequence"
+    placeholder="5' → 3' の塩基配列を入力してください&#10;例：ATGAAAGCTGCT..."
+  ></textarea>
+
+
+  <!-- 変異 -->
+  <h2>変異</h2>
+
+  <div class="mutation-row">
+
+    <input
+      type="number"
+      id="position"
+      class="position-input"
+      min="1"
+      placeholder="50"
+    >
+
+    <span>番目の</span>
+
+    <input
+      type="text"
+      id="originalAA"
+      class="aa-input"
+      maxlength="1"
+      placeholder="A"
+    >
+
+    <span>残基を</span>
+
+    <input
+      type="text"
+      id="mutantAA"
+      class="aa-input"
+      maxlength="1"
+      placeholder="G"
+    >
+
+    <span>に変換する。</span>
+
+    
+  </div>
+
+
+
+   <p class="sequence-note"><br>
+       Primer F：変異コドンに加えて、5'側6塩基と3'側18塩基を含めたプライマーを作成します。3'末端がA/Tの場合は、最も近いG/Cまで3'方向に延長します。<br>
+       Primer R：Primer Fと同様の操作を、相補鎖（reverse complement）に対して行います。
+    </p>
+
+  <button id="designButton">
+    プライマーを設計
+  </button>
+
+
+  <!-- 結果 -->
+  <div id="result"></div>
+
+</div>
+
+
+
+<script>
+/* =========================================================
+   1. 標準遺伝暗号表（DNA表記）
+========================================================= */
+
+const CODON_TABLE = {
+  "TTT":"F", "TTC":"F", "TTA":"L", "TTG":"L",
+  "TCT":"S", "TCC":"S", "TCA":"S", "TCG":"S",
+  "TAT":"Y", "TAC":"Y", "TAA":"*", "TAG":"*",
+  "TGT":"C", "TGC":"C", "TGA":"*", "TGG":"W",
+
+  "CTT":"L", "CTC":"L", "CTA":"L", "CTG":"L",
+  "CCT":"P", "CCC":"P", "CCA":"P", "CCG":"P",
+  "CAT":"H", "CAC":"H", "CAA":"Q", "CAG":"Q",
+  "CGT":"R", "CGC":"R", "CGA":"R", "CGG":"R",
+
+  "ATT":"I", "ATC":"I", "ATA":"I", "ATG":"M",
+  "ACT":"T", "ACC":"T", "ACA":"T", "ACG":"T",
+  "AAT":"N", "AAC":"N", "AAA":"K", "AAG":"K",
+  "AGT":"S", "AGC":"S", "AGA":"R", "AGG":"R",
+
+  "GTT":"V", "GTC":"V", "GTA":"V", "GTG":"V",
+  "GCT":"A", "GCC":"A", "GCA":"A", "GCG":"A",
+  "GAT":"D", "GAC":"D", "GAA":"E", "GAG":"E",
+  "GGT":"G", "GGC":"G", "GGA":"G", "GGG":"G"
+};
+
+
+/* =========================================================
+   2. E. coli K-12 Codon Usage
+   画像のUはDNA表記のTに置換
+========================================================= */
+
+const CODON_USAGE = {
+  "TTT":0.57, "TTC":0.43,
+  "TTA":0.15, "TTG":0.12,
+  "CTT":0.12, "CTC":0.10, "CTA":0.05, "CTG":0.46,
+
+  "TCT":0.11, "TCC":0.11, "TCA":0.15, "TCG":0.16,
+  "AGT":0.14, "AGC":0.33,
+
+  "TAT":0.53, "TAC":0.47,
+
+  "TAA":0.64, "TAG":0.00, "TGA":0.36,
+
+  "TGT":0.42, "TGC":0.58,
+  "TGG":1.00,
+
+  "CCT":0.17, "CCC":0.13, "CCA":0.14, "CCG":0.55,
+
+  "CAT":0.55, "CAC":0.45,
+  "CAA":0.30, "CAG":0.70,
+
+  "CGT":0.36, "CGC":0.44, "CGA":0.07, "CGG":0.07,
+  "AGA":0.02, "AGG":0.03,
+
+  "ATT":0.58, "ATC":0.35, "ATA":0.07,
+  "ATG":1.00,
+
+  "ACT":0.16, "ACC":0.47, "ACA":0.13, "ACG":0.24,
+
+  "AAT":0.47, "AAC":0.53,
+  "AAA":0.73, "AAG":0.27,
+
+  "GTT":0.25, "GTC":0.18, "GTA":0.17, "GTG":0.40,
+
+  "GCT":0.11, "GCC":0.31, "GCA":0.21, "GCG":0.38,
+
+  "GAT":0.65, "GAC":0.35,
+  "GAA":0.70, "GAG":0.30,
+
+  "GGT":0.29, "GGC":0.46, "GGA":0.13, "GGG":0.12
+};
+
+
+/* =========================================================
+   3. アミノ酸 → コドン一覧
+========================================================= */
+
+const AA_TO_CODONS = {};
+
+for (const codon in CODON_TABLE) {
+  const aa = CODON_TABLE[codon];
+
+  if (!AA_TO_CODONS[aa]) {
+    AA_TO_CODONS[aa] = [];
+  }
+
+  AA_TO_CODONS[aa].push(codon);
+}
+
+
+/* =========================================================
+   4. 配列関連関数
+========================================================= */
+
+function complement(base) {
+  const map = {
+    "A":"T",
+    "T":"A",
+    "G":"C",
+    "C":"G"
+  };
+
+  return map[base];
+}
+
+
+function reverseComplement(sequence) {
+  let result = "";
+
+  for (let i = sequence.length - 1; i >= 0; i--) {
+    result += complement(sequence[i]);
+  }
+
+  return result;
+}
+
+
+function cleanSequence(sequence) {
+  return sequence
+    .toUpperCase()
+    .replace(/\s/g, "");
+}
+
+
+function getCodonStart(position) {
+  return (position - 1) * 3;
+}
+
+
+function countBaseChanges(originalCodon, mutantCodon) {
+  let count = 0;
+
+  for (let i = 0; i < 3; i++) {
+    if (originalCodon[i] !== mutantCodon[i]) {
+      count++;
+    }
+  }
+
+  return count;
+}
+
+
+/* =========================================================
+   5. Primer末端のGC延長
+========================================================= */
+
+function extendForwardEnd(sequence, end) {
+  // sliceのendは「含まない位置」なので、末端塩基は end - 1
+  while (
+    end < sequence.length &&
+    sequence[end - 1] !== "G" &&
+    sequence[end - 1] !== "C"
+  ) {
+    end++;
+  }
+
+  return end;
+}
+
+
+function extendReverseStart(sequence, start) {
+  // coding strand上で5'方向へ延長する
+  while (
+    start > 0 &&
+    sequence[start] !== "G" &&
+    sequence[start] !== "C"
+  ) {
+    start--;
+  }
+
+  return start;
+}
+
+
+/* =========================================================
+   6. Primer作成
+========================================================= */
+
+function createPrimerPair(originalSequence, codonStart, mutantCodon) {
+
+  const mutatedSequence =
+    originalSequence.slice(0, codonStart) +
+    mutantCodon +
+    originalSequence.slice(codonStart + 3);
+
+
+  /* ---------- Forward ----------
+     5'側6塩基 + 変異3塩基 + 3'側18塩基
+  */
+
+  const forwardStart = codonStart - 6;
+  let forwardEnd = codonStart + 3 + 18;
+
+  if (forwardStart < 0 || forwardEnd > mutatedSequence.length) {
+    throw new Error(
+      "Forward primerを作るための周辺配列が不足しています。変異位置を確認してください。"
+    );
+  }
+
+  forwardEnd = extendForwardEnd(mutatedSequence, forwardEnd);
+
+  const primerF =
+    mutatedSequence.slice(forwardStart, forwardEnd);
+
+
+  /* ---------- Reverse ----------
+     coding strand上で
+     5'側18塩基 + 変異3塩基 + 3'側6塩基
+     を切り出してReverse Complement
+  */
+
+  let reverseStart = codonStart - 18;
+  const reverseEnd = codonStart + 3 + 6;
+
+  if (reverseStart < 0 || reverseEnd > mutatedSequence.length) {
+    throw new Error(
+      "Reverse primerを作るための周辺配列が不足しています。変異位置を確認してください。"
+    );
+  }
+
+  reverseStart = extendReverseStart(mutatedSequence, reverseStart);
+
+  const reverseTemplate =
+    mutatedSequence.slice(reverseStart, reverseEnd);
+
+  const primerR =
+    reverseComplement(reverseTemplate);
+
+
+  return {
+    primerF,
+    primerR,
+    mutatedSequence
+  };
+}
+
+
+/* =========================================================
+   7. 変異コドンを赤字＋太字
+   F/Rともに5'端から7〜9塩基目
+========================================================= */
+
+function highlightMutation(primer) {
+  const mutationStart = 6;
+  const mutationEnd = 9;
+
+  const before = primer.slice(0, mutationStart);
+  const mutation = primer.slice(mutationStart, mutationEnd);
+  const after = primer.slice(mutationEnd);
+
+  return (
+    before +
+    '<span class="mutation-codon">' +
+    mutation +
+    '</span>' +
+    after
+  );
+}
+
+
+/* =========================================================
+   8. エラー表示
+========================================================= */
+
+function showError(message) {
+  document.getElementById("result").innerHTML = `
+    <div class="error">
+      ${message}
+    </div>
+  `;
+}
+
+
+/* =========================================================
+   9. ボタン処理
+========================================================= */
+
+document
+  .getElementById("designButton")
+  .addEventListener("click", function () {
+
+    const result =
+      document.getElementById("result");
+
+    result.innerHTML = "";
+
+    const sequence =
+      cleanSequence(
+        document.getElementById("sequence").value
+      );
+
+    const position =
+      Number(
+        document.getElementById("position").value
+      );
+
+    const originalAA =
+      document
+        .getElementById("originalAA")
+        .value
+        .trim()
+        .toUpperCase();
+
+    const mutantAA =
+      document
+        .getElementById("mutantAA")
+        .value
+        .trim()
+        .toUpperCase();
+
+
+    /* ---------- 入力チェック ---------- */
+
+    if (sequence.length === 0) {
+      showError("塩基配列を入力してください。");
+      return;
+    }
+
+    if (!/^[ATGC]+$/.test(sequence)) {
+      showError("塩基配列にはA、T、G、Cのみ使用してください。");
+      return;
+    }
+
+    if (sequence.length % 3 !== 0) {
+      showError("塩基配列の長さが3の倍数ではありません。");
+      return;
+    }
+
+    if (!Number.isInteger(position) || position < 1) {
+      showError("残基番号を正しく入力してください。");
+      return;
+    }
+
+    if (originalAA && !AA_TO_CODONS[originalAA]) {
+      showError("元のアミノ酸を1文字表記で入力してください。");
+      return;
+    }
+
+    if (!AA_TO_CODONS[mutantAA]) {
+      showError("変異後のアミノ酸を1文字表記で入力してください。");
+      return;
+    }
+
+
+    /* ---------- 元コドン確認 ---------- */
+
+    const codonStart =
+      getCodonStart(position);
+
+    if (codonStart + 3 > sequence.length) {
+      showError("指定された残基番号は配列範囲外です。");
+      return;
+    }
+
+    const originalCodon =
+      sequence.slice(codonStart, codonStart + 3);
+
+    const detectedAA =
+      CODON_TABLE[originalCodon];
+
+    if (originalAA && originalAA !== detectedAA) {
+      showError(
+        position +
+        "番目の残基は " +
+        originalAA +
+        " ではありません。<br>" +
+        "入力された配列では <strong>" +
+        detectedAA +
+        "</strong> です。<br>" +
+        "コドン：" +
+        originalCodon
+      );
+
+      return;
+    }
+
+
+    /* ---------- 変異後コドン候補 ----------
+       E. coli codon usageの高い順
+    */
+
+    const candidateCodons =
+      [...AA_TO_CODONS[mutantAA]]
+        .sort(function(a, b) {
+          return CODON_USAGE[b] - CODON_USAGE[a];
+        });
+
+
+    let html = "";
+
+    html += `
+      <div class="info">
+        <strong>変異：</strong>
+        ${detectedAA}${position}${mutantAA}
+        <br>
+
+        <strong>元のコドン：</strong>
+        ${originalCodon}
+        <br>
+
+        <strong>変異後コドン候補：</strong>
+        ${candidateCodons.join(", ")}
+      </div>
+    `;
+
+
+    html += `
+      <table>
+        <thead>
+          <tr>
+            <th>順位</th>
+            <th>変異コドン</th>
+            <th>Codon usage</th>
+            <th>塩基置換数</th>
+            <th>Primer F (5'→3')</th>
+            <th>Primer R (5'→3')</th>
+          </tr>
+        </thead>
+
+        <tbody>
+    `;
+
+
+    try {
+      candidateCodons.forEach(function(mutantCodon, index) {
+
+        const primers =
+          createPrimerPair(
+            sequence,
+            codonStart,
+            mutantCodon
+          );
+
+        const usage =
+          CODON_USAGE[mutantCodon];
+
+        const usagePercent =
+          Math.round(usage * 100);
+
+        const baseChanges =
+          countBaseChanges(
+            originalCodon,
+            mutantCodon
+          );
+
+        html += `
+          <tr>
+            <td>${index + 1}</td>
+
+            <td class="sequence">
+              ${mutantCodon}
+            </td>
+
+            <td>
+              ${usagePercent}%
+            </td>
+
+            <td>
+              ${baseChanges}
+            </td>
+
+            <td class="sequence">
+              ${highlightMutation(primers.primerF)}
+            </td>
+
+            <td class="sequence">
+              ${highlightMutation(primers.primerR)}
+            </td>
+          </tr>
+        `;
+      });
+
+    } catch (error) {
+      showError(error.message);
+      return;
+    }
+
+
+    html += `
+        </tbody>
+      </table>
+    `;
+
+    result.innerHTML = html;
+  });
+</script>
+
+
+</body>
+</html>
