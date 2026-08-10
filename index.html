@@ -278,6 +278,14 @@
       text-decoration: underline;
     }
 
+
+    .tm-value {
+      min-width: 78px;
+      font-weight: 800;
+      white-space: nowrap;
+      text-align: center;
+    }
+
     .mutation-codon {
       display: inline-block;
       padding: 0 3px;
@@ -322,6 +330,59 @@
         white-space: normal;
       }
     }
+
+    .section-title {
+      margin-top: 36px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+      font-size: 21px;
+      letter-spacing: -0.01em;
+    }
+
+    .tm-calculator-section {
+      margin-top: 38px;
+      padding-top: 4px;
+    }
+
+    .tm-textarea {
+      min-height: 120px;
+    }
+
+    .secondary-button {
+      background: #ffffff;
+      color: var(--primary);
+      border: 1px solid #cfd8f6;
+      box-shadow: 0 7px 18px rgba(49, 87, 213, 0.10);
+    }
+
+    .secondary-button:hover {
+      background: var(--primary-soft);
+      box-shadow: 0 9px 20px rgba(49, 87, 213, 0.15);
+    }
+
+    .tm-result-box {
+      margin-top: 18px;
+      padding: 18px 20px;
+      background: var(--primary-soft);
+      border: 1px solid #d9e0ff;
+      border-radius: var(--radius-md);
+      color: #26345f;
+    }
+
+    .tm-result-number {
+      margin-top: 4px;
+      font-size: 30px;
+      font-weight: 850;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .tm-result-meta {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
   </style>
 
 </head>
@@ -333,6 +394,8 @@
 
   <h1>Primer Designer</h1>
 
+
+  <h2 class="section-title">プライマー設計</h2>
 
   <!-- DNA配列 -->
   <h2>塩基配列（全長）を入力</h2>
@@ -385,8 +448,9 @@
 
 
    <p class="sequence-note"><br>
-       Primer F：変異コドンに加えて、5'側6塩基と3'側18塩基を含めたプライマーを作成します。3'末端がA/Tの場合は、最も近いG/Cまで3'方向に延長します。<br>
-       Primer R：Primer Fと同様の操作を、相補鎖（reverse complement）に対して行います。
+        Primer F：変異コドンに加えて、5'側6塩基と3'側18塩基を含めたプライマーを作成します。3'末端がA/Tの場合は、最も近いG/Cまで3'方向に延長します。<br>
+        Primer R：Primer Fと同様の操作を、相補鎖（reverse complement）に対して行います。<br>
+        Tm：最近接塩基対法で計算します（Primer濃度 0.5 µM、Na<sup>+</sup> 50 mM）。Primer F / Rともに、<strong>変異コドン自体は含めず、変異コドンより3'側の配列のみ</strong>をTm計算に使用します。
     </p>
 
   <button id="designButton">
@@ -394,8 +458,33 @@
   </button>
 
 
-  <!-- 結果 -->
+  <!-- Primer設計結果 -->
   <div id="result"></div>
+
+  <!-- 独立Tm計算 -->
+  <div class="tm-calculator-section">
+
+    <h2 class="section-title">Tmを計算（最近接塩基対法）</h2>
+
+    <p class="sequence-note">
+      Tmを求めたい塩基配列を5'→3'で入力してください。入力した配列全体を用いて、
+      Primer濃度 0.5 µM、Na<sup>+</sup> 50 mMとして計算します。
+    </p>
+
+    <textarea
+      id="tmSequence"
+      class="tm-textarea"
+      placeholder="5' → 3' の塩基配列を入力してください&#10;例：GCGATCGATCGATCGC"
+    ></textarea>
+
+    <button id="tmCalculateButton" class="secondary-button">
+      Tmを計算
+    </button>
+
+    <div id="tmResult"></div>
+
+  </div>
+
 
 </div>
 
@@ -542,6 +631,85 @@ function countBaseChanges(originalCodon, mutantCodon) {
   }
 
   return count;
+}
+
+
+/* =========================================================
+   最近接塩基対法によるTm計算
+
+   Tm = (1000 × ΔH) /
+        (-10.8 + ΔS + 1.987 × ln(Conc/4))
+        - 273.15
+        + 16.6 × log10([Na+])
+
+   標準条件：
+   Primer concentration = 0.5 µM
+   Na+ concentration     = 50 mM
+========================================================= */
+
+const NN_PARAMS = {
+  "AA": { dH: -9.1,  dS: -24.0 },
+  "TT": { dH: -9.1,  dS: -24.0 },
+
+  "AT": { dH: -8.6,  dS: -23.9 },
+
+  "TA": { dH: -6.0,  dS: -16.9 },
+
+  "CA": { dH: -5.8,  dS: -12.9 },
+  "TG": { dH: -5.8,  dS: -12.9 },
+
+  "GT": { dH: -6.5,  dS: -17.3 },
+  "AC": { dH: -6.5,  dS: -17.3 },
+
+  "CT": { dH: -7.8,  dS: -20.8 },
+  "AG": { dH: -7.8,  dS: -20.8 },
+
+  "GA": { dH: -5.6,  dS: -13.5 },
+  "TC": { dH: -5.6,  dS: -13.5 },
+
+  "CG": { dH: -11.9, dS: -27.8 },
+
+  "GC": { dH: -11.1, dS: -26.7 },
+
+  "GG": { dH: -11.0, dS: -26.6 },
+  "CC": { dH: -11.0, dS: -26.6 }
+};
+
+const PRIMER_CONC_M = 0.5e-6;
+const NA_CONC_M = 0.05;
+
+
+function calculateTm(sequence) {
+
+  let deltaH = 0;
+  let deltaS = 0;
+
+  for (let i = 0; i < sequence.length - 1; i++) {
+
+    const pair = sequence.slice(i, i + 2);
+    const params = NN_PARAMS[pair];
+
+    if (!params) {
+      throw new Error(
+        "Tm計算中に認識できない塩基対が見つかりました：" + pair
+      );
+    }
+
+    deltaH += params.dH;
+    deltaS += params.dS;
+  }
+
+  const denominator =
+    -10.8 +
+    deltaS +
+    1.987 * Math.log(PRIMER_CONC_M / 4);
+
+  const tm =
+    (1000 * deltaH) / denominator
+    - 273.15
+    + 16.6 * Math.log10(NA_CONC_M);
+
+  return tm;
 }
 
 
@@ -818,7 +986,9 @@ document
             <th>Codon usage</th>
             <th>塩基置換数</th>
             <th>Primer F (5'→3')</th>
+            <th>Tm F (°C)</th>
             <th>Primer R (5'→3')</th>
+            <th>Tm R (°C)</th>
           </tr>
         </thead>
 
@@ -848,6 +1018,12 @@ document
             mutantCodon
           );
 
+        const tmF =
+          calculateTm(primers.primerF.slice(9));
+
+        const tmR =
+          calculateTm(primers.primerR.slice(9));
+
         html += `
           <tr>
             <td>${index + 1}</td>
@@ -868,8 +1044,16 @@ document
               ${highlightMutation(primers.primerF)}
             </td>
 
+            <td class="tm-value">
+              ${tmF.toFixed(1)}
+            </td>
+
             <td class="sequence">
               ${highlightMutation(primers.primerR)}
+            </td>
+
+            <td class="tm-value">
+              ${tmR.toFixed(1)}
             </td>
           </tr>
         `;
@@ -888,6 +1072,86 @@ document
 
     result.innerHTML = html;
   });
+
+
+/* =========================================================
+   独立Tm計算
+   入力された配列全体を最近接塩基対法で計算
+========================================================= */
+
+document
+  .getElementById("tmCalculateButton")
+  .addEventListener("click", function () {
+
+    const tmResult =
+      document.getElementById("tmResult");
+
+    const tmSequence =
+      cleanSequence(
+        document.getElementById("tmSequence").value
+      );
+
+    tmResult.innerHTML = "";
+
+    if (tmSequence.length === 0) {
+      tmResult.innerHTML = `
+        <div class="error">
+          Tmを計算する塩基配列を入力してください。
+        </div>
+      `;
+      return;
+    }
+
+    if (!/^[ATGC]+$/.test(tmSequence)) {
+      tmResult.innerHTML = `
+        <div class="error">
+          塩基配列にはA、T、G、Cのみ使用してください。
+        </div>
+      `;
+      return;
+    }
+
+    if (tmSequence.length < 2) {
+      tmResult.innerHTML = `
+        <div class="error">
+          最近接塩基対法で計算するため、2塩基以上の配列を入力してください。
+        </div>
+      `;
+      return;
+    }
+
+    try {
+
+      const tm =
+        calculateTm(tmSequence);
+
+      tmResult.innerHTML = `
+        <div class="tm-result-box">
+          <strong>Tm</strong>
+          <div class="tm-result-number">
+            ${tm.toFixed(1)} °C
+          </div>
+
+          <div class="tm-result-meta">
+            配列長：${tmSequence.length} nt ／
+            Primer濃度：0.5 µM ／
+            Na<sup>+</sup>：50 mM
+          </div>
+        </div>
+      `;
+
+    } catch (error) {
+
+      tmResult.innerHTML = `
+        <div class="error">
+          ${error.message}
+        </div>
+      `;
+
+    }
+
+  });
+
 </script>
 
 
