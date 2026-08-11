@@ -434,6 +434,60 @@
       background: #fbfcff;
     }
 
+
+    .complement-section {
+      margin-top: 38px;
+      padding-top: 4px;
+    }
+
+    .complement-result-box {
+      margin-top: 18px;
+      padding: 18px 20px;
+      background: var(--primary-soft);
+      border: 1px solid #d9e0ff;
+      border-radius: var(--radius-md);
+      color: #26345f;
+    }
+
+    .complement-label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .complement-sequence-output {
+      margin-top: 8px;
+      font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        Menlo,
+        monospace;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.8;
+      letter-spacing: 0.03em;
+      word-break: break-all;
+      color: var(--text);
+    }
+
+    #originalAA {
+      background: #f3f6fb;
+      color: var(--text);
+    }
+
+
+    .warning {
+      margin-top: 18px;
+      padding: 16px 18px;
+      color: #8a5a00;
+      background: #fff8e6;
+      border: 1px solid #f2cf7a;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      line-height: 1.7;
+    }
+
   </style>
 
 </head>
@@ -446,15 +500,15 @@
   <h1>Primer Designer</h1>
 
 
-  <h2 class="section-title">プライマー設計</h2>
+  <h2 class="section-title">一変異導入用プライマー設計</h2>
 
   <!-- DNA配列 -->
-  <h2>塩基配列（全長）を入力</h2>
+  <h2>塩基配列を入力</h2>
 
   
   <textarea
     id="sequence"
-    placeholder="アミノ酸配列に対応する塩基配列のみを入力してください&#10;5' → 3' の塩基配列を入力してください&#10;例：ATGAAAGCTGCT..."
+    placeholder="アミノ酸配列に対応する塩基配列（5' → 3'）を入力してください&#10;例：ATGAAAGCTGCT..."
   ></textarea>
 
 
@@ -478,7 +532,7 @@
       id="originalAA"
       class="aa-input"
       maxlength="1"
-      placeholder="A"
+      placeholder="自動"
     >
 
     <span>残基を</span>
@@ -501,8 +555,7 @@
    <p class="sequence-note"><br>
         Primer F：変異コドンに加えて、5'側6塩基と3'側18塩基を含めたプライマーを作成します。3'末端がA/Tの場合は、最も近いG/Cまで3'方向に延長します。<br>
         Primer R：Primer Fと同様の操作を、相補鎖（reverse complement）に対して行います。<br>
-        Tm：最近接塩基対法で計算します（Primer濃度 0.5 µM、Na<sup>+</sup> 50 mM）。Primer F / Rともに、<strong>変異コドン自体は含めず、変異コドンより3'側の配列のみ</strong>をTm計算に使用します。<br>
-        Codon Usage：大腸菌の値を用いています。
+        Tm：最近接塩基対法で計算します（Primer濃度 0.5 µM、Na<sup>+</sup> 50 mM）。Primer F / Rともに、<strong>変異コドン自体は含めず、変異コドンより3'側の配列のみ</strong>をTm計算に使用します。
     </p>
 
   <button id="designButton">
@@ -534,6 +587,30 @@
     </button>
 
     <div id="tmResult"></div>
+
+  </div>
+
+
+  <!-- 相補鎖変換 -->
+  <div class="complement-section">
+
+    <h2 class="section-title">逆向き相補鎖に変換</h2>
+
+    <p class="sequence-note">
+      塩基配列を5'→3'で入力してください。A↔T、G↔Cで相補鎖に変換した後、配列を反転し、逆向き相補鎖（reverse complement）を5'→3'で表示します。
+    </p>
+
+    <textarea
+      id="complementSequence"
+      class="tm-textarea"
+      placeholder="5' → 3' の塩基配列を入力してください&#10;例：ATGCGTAC"
+    ></textarea>
+
+    <button id="complementButton" class="secondary-button">
+      逆向き相補鎖に変換
+    </button>
+
+    <div id="complementResult"></div>
 
   </div>
 
@@ -765,6 +842,16 @@ function calculateTm(sequence) {
 }
 
 
+function calculateTmSafe(sequence) {
+
+  if (sequence.length < 2) {
+    return null;
+  }
+
+  return calculateTm(sequence);
+}
+
+
 /* =========================================================
    5. Primer末端のGC延長
 ========================================================= */
@@ -803,6 +890,8 @@ function extendReverseStart(sequence, start) {
 
 function createPrimerPair(originalSequence, codonStart, mutantCodon) {
 
+  const warnings = [];
+
   const mutatedSequence =
     originalSequence.slice(0, codonStart) +
     mutantCodon +
@@ -810,22 +899,97 @@ function createPrimerPair(originalSequence, codonStart, mutantCodon) {
 
 
   /* ---------- Forward ----------
+     基本：
      5'側6塩基 + 変異3塩基 + 3'側18塩基
   */
 
-  const forwardStart = codonStart - 6;
-  let forwardEnd = codonStart + 3 + 18;
+  const desiredForwardStart =
+    codonStart - 6;
 
-  if (forwardStart < 0 || forwardEnd > mutatedSequence.length) {
-    throw new Error(
-      "Forward primerを作るための周辺配列が不足しています。変異位置を確認してください。"
+  const desiredForwardEnd =
+    codonStart + 3 + 18;
+
+  let forwardStart =
+    Math.max(0, desiredForwardStart);
+
+  let forwardEnd =
+    Math.min(
+      mutatedSequence.length,
+      desiredForwardEnd
+    );
+
+
+  if (desiredForwardStart < 0) {
+    warnings.push(
+      "Primer F：変異コドンの5'側6塩基を確保できないため、配列の5'末端から作成しています。"
     );
   }
 
-  forwardEnd = extendForwardEnd(mutatedSequence, forwardEnd);
+  if (desiredForwardEnd > mutatedSequence.length) {
+
+    /*
+      3'側18塩基を確保できない場合：
+      配列末端から5'方向へ戻り、
+      最も長く取れるG/C終端位置を探す
+    */
+
+    let gcEnd =
+      mutatedSequence.length;
+
+    while (
+      gcEnd > codonStart + 3 &&
+      mutatedSequence[gcEnd - 1] !== "G" &&
+      mutatedSequence[gcEnd - 1] !== "C"
+    ) {
+      gcEnd--;
+    }
+
+    if (
+      gcEnd > codonStart + 3 &&
+      (
+        mutatedSequence[gcEnd - 1] === "G" ||
+        mutatedSequence[gcEnd - 1] === "C"
+      )
+    ) {
+      forwardEnd =
+        gcEnd;
+
+      warnings.push(
+        "Primer F：変異コドンの3'側18塩基を確保できないため、取得可能な範囲で最も長く、3'末端がG/Cになる位置までで作成しています。"
+      );
+
+    } else {
+
+      forwardEnd =
+        mutatedSequence.length;
+
+      warnings.push(
+        "Primer F：変異コドンの3'側18塩基を確保できず、利用可能な3'側領域にG/C終端位置もないため、配列末端までで作成しています。"
+      );
+    }
+
+  } else {
+
+    /*
+      18塩基確保できる場合：
+      3'末端がA/Tなら次のG/Cまで延長
+    */
+    forwardEnd =
+      extendForwardEnd(
+        mutatedSequence,
+        forwardEnd
+      );
+  }
+
 
   const primerF =
-    mutatedSequence.slice(forwardStart, forwardEnd);
+    mutatedSequence.slice(
+      forwardStart,
+      forwardEnd
+    );
+
+  const mutationStartF =
+    codonStart - forwardStart;
 
 
   /* ---------- Reverse ----------
@@ -834,32 +998,124 @@ function createPrimerPair(originalSequence, codonStart, mutantCodon) {
      を切り出してReverse Complement
   */
 
-  let reverseStart = codonStart - 18;
-  const reverseEnd = codonStart + 3 + 6;
+  const desiredReverseStart =
+    codonStart - 18;
 
-  if (reverseStart < 0 || reverseEnd > mutatedSequence.length) {
-    throw new Error(
-      "Reverse primerを作るための周辺配列が不足しています。変異位置を確認してください。"
+  const desiredReverseEnd =
+    codonStart + 3 + 6;
+
+  let reverseStart =
+    Math.max(0, desiredReverseStart);
+
+  let reverseEnd =
+    Math.min(
+      mutatedSequence.length,
+      desiredReverseEnd
+    );
+
+
+  if (desiredReverseStart < 0) {
+
+    /*
+      Primer Rの18塩基側が不足する場合：
+      reverse complement後の3'末端がG/Cになるよう、
+      coding strandの5'端側から最初のG/Cを探す。
+      これが、取得可能な中で最長のPrimerになる。
+    */
+
+    let gcStart = 0;
+
+    while (
+      gcStart < codonStart &&
+      mutatedSequence[gcStart] !== "G" &&
+      mutatedSequence[gcStart] !== "C"
+    ) {
+      gcStart++;
+    }
+
+    if (
+      gcStart < codonStart &&
+      (
+        mutatedSequence[gcStart] === "G" ||
+        mutatedSequence[gcStart] === "C"
+      )
+    ) {
+      reverseStart =
+        gcStart;
+
+      warnings.push(
+        "Primer R：変異コドンの18塩基側を確保できないため、取得可能な範囲で最も長く、Primerの3'末端がG/Cになる位置までで作成しています。"
+      );
+
+    } else {
+
+      reverseStart = 0;
+
+      warnings.push(
+        "Primer R：変異コドンの18塩基側を確保できず、利用可能な領域にG/C終端位置もないため、配列の5'末端までで作成しています。"
+      );
+    }
+  }
+
+  if (desiredReverseEnd > mutatedSequence.length) {
+    warnings.push(
+      "Primer R：変異コドンの3'側6塩基を確保できないため、配列の3'末端までで作成しています。"
     );
   }
 
-  reverseStart = extendReverseStart(mutatedSequence, reverseStart);
+
+  /*
+    18塩基側を十分確保できる場合のみ、
+    coding strand上で5'方向へG/Cまで延長
+  */
+  if (desiredReverseStart >= 0) {
+    reverseStart =
+      extendReverseStart(
+        mutatedSequence,
+        reverseStart
+      );
+  }
+
 
   const reverseTemplate =
-    mutatedSequence.slice(reverseStart, reverseEnd);
+    mutatedSequence.slice(
+      reverseStart,
+      reverseEnd
+    );
 
   const primerR =
-    reverseComplement(reverseTemplate);
+    reverseComplement(
+      reverseTemplate
+    );
+
+
+  /*
+    Reverse primer中の変異位置。
+    reverseTemplate内の変異コドン位置を反転して求める。
+  */
+  const mutationOffsetInTemplate =
+    codonStart - reverseStart;
+
+  const mutationStartR =
+    reverseTemplate.length -
+    (mutationOffsetInTemplate + 3);
 
 
   return {
     primerF,
     primerR,
     mutatedSequence,
+
     forwardStart,
     forwardEnd,
+
     reverseStart,
-    reverseEnd
+    reverseEnd,
+
+    mutationStartF,
+    mutationStartR,
+
+    warnings
   };
 }
 
@@ -869,13 +1125,29 @@ function createPrimerPair(originalSequence, codonStart, mutantCodon) {
    F/Rともに5'端から7〜9塩基目
 ========================================================= */
 
-function highlightMutation(primer) {
-  const mutationStart = 6;
-  const mutationEnd = 9;
+function highlightMutation(primer, mutationStart) {
 
-  const before = primer.slice(0, mutationStart);
-  const mutation = primer.slice(mutationStart, mutationEnd);
-  const after = primer.slice(mutationEnd);
+  const mutationEnd =
+    mutationStart + 3;
+
+  if (
+    mutationStart < 0 ||
+    mutationEnd > primer.length
+  ) {
+    return primer;
+  }
+
+  const before =
+    primer.slice(0, mutationStart);
+
+  const mutation =
+    primer.slice(
+      mutationStart,
+      mutationEnd
+    );
+
+  const after =
+    primer.slice(mutationEnd);
 
   return (
     before +
@@ -973,12 +1245,20 @@ let primerVariantCounters = {};
 /*
   Primerセル内の表示を作る
 */
-function makePrimerCell(primer, rowId, direction) {
+function makePrimerCell(
+  primer,
+  mutationStart,
+  rowId,
+  direction
+) {
 
   return `
     <div class="primer-cell-content">
       <div>
-        ${highlightMutation(primer)}
+        ${highlightMutation(
+          primer,
+          mutationStart
+        )}
       </div>
 
       <button
@@ -1083,10 +1363,10 @@ function extendPrimerRow(rowId, direction, button) {
 
 
   const tmF =
-    calculateTm(newData.primerF.slice(9));
+    calculateTmSafe(newData.primerF.slice(newData.mutationStartF + 3));
 
   const tmR =
-    calculateTm(newData.primerR.slice(9));
+    calculateTmSafe(newData.primerR.slice(newData.mutationStartR + 3));
 
 
   const newRowHtml = `
@@ -1112,25 +1392,27 @@ function extendPrimerRow(rowId, direction, button) {
       <td class="sequence">
         ${makePrimerCell(
           newData.primerF,
+          newData.mutationStartF,
           newRowId,
           "F"
         )}
       </td>
 
       <td class="tm-value">
-        ${tmF.toFixed(1)}
+        ${tmF === null ? "N/A" : tmF.toFixed(1)}
       </td>
 
       <td class="sequence">
         ${makePrimerCell(
           newData.primerR,
+          newData.mutationStartR,
           newRowId,
           "R"
         )}
       </td>
 
       <td class="tm-value">
-        ${tmR.toFixed(1)}
+        ${tmR === null ? "N/A" : tmR.toFixed(1)}
       </td>
     </tr>
   `;
@@ -1153,6 +1435,59 @@ function extendPrimerRow(rowId, direction, button) {
     newRowHtml
   );
 }
+
+
+
+/* 残基番号から元アミノ酸を自動表示 */
+function updateOriginalAA() {
+  const sequence = cleanSequence(
+    document.getElementById("sequence").value
+  );
+
+  const position = Number(
+    document.getElementById("position").value
+  );
+
+  const originalAAInput =
+    document.getElementById("originalAA");
+
+  if (
+    sequence.length === 0 ||
+    !Number.isInteger(position) ||
+    position < 1
+  ) {
+    originalAAInput.value = "";
+    return;
+  }
+
+  const codonStart = getCodonStart(position);
+
+  if (codonStart + 3 > sequence.length) {
+    originalAAInput.value = "";
+    return;
+  }
+
+  const codon = sequence.slice(
+    codonStart,
+    codonStart + 3
+  );
+
+  if (!/^[ATGC]{3}$/.test(codon)) {
+    originalAAInput.value = "";
+    return;
+  }
+
+  originalAAInput.value =
+    CODON_TABLE[codon] || "";
+}
+
+document
+  .getElementById("position")
+  .addEventListener("input", updateOriginalAA);
+
+document
+  .getElementById("sequence")
+  .addEventListener("input", updateOriginalAA);
 
 
 /* =========================================================
@@ -1287,6 +1622,7 @@ document
 
 
     let html = "";
+    const designWarnings = new Set();
 
     html += `
       <div class="info">
@@ -1333,6 +1669,10 @@ document
             mutantCodon
           );
 
+        primers.warnings.forEach(function(warning) {
+          designWarnings.add(warning);
+        });
+
         const usage =
           CODON_USAGE[mutantCodon];
 
@@ -1346,10 +1686,10 @@ document
           );
 
         const tmF =
-          calculateTm(primers.primerF.slice(9));
+          calculateTmSafe(primers.primerF.slice(primers.mutationStartF + 3));
 
         const tmR =
-          calculateTm(primers.primerR.slice(9));
+          calculateTmSafe(primers.primerR.slice(primers.mutationStartR + 3));
 
         const rootNo =
           index + 1;
@@ -1377,7 +1717,12 @@ document
           forwardEnd: primers.forwardEnd,
 
           reverseStart: primers.reverseStart,
-          reverseEnd: primers.reverseEnd
+          reverseEnd: primers.reverseEnd,
+
+          mutationStartF: primers.mutationStartF,
+          mutationStartR: primers.mutationStartR,
+
+          warnings: primers.warnings
         };
 
         html += `
@@ -1402,25 +1747,27 @@ document
             <td class="sequence">
               ${makePrimerCell(
                 primers.primerF,
+                primers.mutationStartF,
                 rowId,
                 "F"
               )}
             </td>
 
             <td class="tm-value">
-              ${tmF.toFixed(1)}
+              ${tmF === null ? "N/A" : tmF.toFixed(1)}
             </td>
 
             <td class="sequence">
               ${makePrimerCell(
                 primers.primerR,
+                primers.mutationStartR,
                 rowId,
                 "R"
               )}
             </td>
 
             <td class="tm-value">
-              ${tmR.toFixed(1)}
+              ${tmR === null ? "N/A" : tmR.toFixed(1)}
             </td>
           </tr>
         `;
@@ -1436,6 +1783,22 @@ document
         </tbody>
       </table>
     `;
+
+    if (designWarnings.size > 0) {
+
+      const warningHtml = `
+        <div class="warning">
+          <strong>⚠ Primer長が不足しています</strong><br>
+          ${Array.from(designWarnings).join("<br>")}
+          <br>
+          可能な範囲でPrimer候補を表示しています。
+        </div>
+      `;
+
+      html =
+        warningHtml +
+        html;
+    }
 
     result.innerHTML = html;
   });
@@ -1516,6 +1879,78 @@ document
       `;
 
     }
+
+  });
+
+
+
+/* =========================================================
+   逆向き相補鎖（reverse complement）変換
+   5'→3'入力をreverse complementし、5'→3'で表示
+========================================================= */
+
+function makeComplement(sequence) {
+
+  return reverseComplement(sequence);
+}
+
+
+document
+  .getElementById("complementButton")
+  .addEventListener("click", function () {
+
+    const complementResult =
+      document.getElementById("complementResult");
+
+    const inputSequence =
+      cleanSequence(
+        document.getElementById("complementSequence").value
+      );
+
+    complementResult.innerHTML = "";
+
+    if (inputSequence.length === 0) {
+      complementResult.innerHTML = `
+        <div class="error">
+          逆向き相補鎖に変換する塩基配列を入力してください。
+        </div>
+      `;
+      return;
+    }
+
+    if (!/^[ATGC]+$/.test(inputSequence)) {
+      complementResult.innerHTML = `
+        <div class="error">
+          塩基配列にはA、T、G、Cのみ使用してください。
+        </div>
+      `;
+      return;
+    }
+
+    const converted =
+      makeComplement(inputSequence);
+
+    complementResult.innerHTML = `
+      <div class="complement-result-box">
+
+        <div class="complement-label">
+          入力（5'→3'）
+        </div>
+
+        <div class="complement-sequence-output">
+          5' - ${inputSequence} - 3'
+        </div>
+
+        <div class="complement-label" style="margin-top: 14px;">
+          逆向き相補鎖（5'→3'）
+        </div>
+
+        <div class="complement-sequence-output">
+          5' - ${converted} - 3'
+        </div>
+
+      </div>
+    `;
 
   });
 
