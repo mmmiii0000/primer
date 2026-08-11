@@ -1,2 +1,2 @@
-# my-website
+# primer
 作ってみたぜ
