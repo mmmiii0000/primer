@@ -982,6 +982,47 @@
       margin-top: 36px;
     }
 
+
+    /* ===== 自動Primer 開始位置の数え方 ===== */
+    .auto-primer-origin {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px;
+      background: #eef2f7;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+
+    .auto-primer-origin input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .auto-primer-origin label {
+      min-width: 54px;
+      padding: 6px 11px;
+      border-radius: 7px;
+      color: var(--muted);
+      background: transparent;
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.2;
+      text-align: center;
+      cursor: pointer;
+      transition:
+        color 0.15s ease,
+        background-color 0.15s ease,
+        box-shadow 0.15s ease;
+    }
+
+    .auto-primer-origin input:checked + label {
+      color: #ffffff;
+      background: var(--primary);
+      box-shadow: 0 3px 8px rgba(49, 87, 213, 0.22);
+    }
+
   </style>
 
 </head>
@@ -1068,12 +1109,33 @@
     <h2 class="section-title">自動プライマー設計</h2>
 
     <p class="sequence-note">
-      開始塩基番号を指定し、その位置から3'方向へ、3'末端がG/CでTmが55〜60℃になるPrimerを自動で選択します。<br>
+      「前から」または「後ろから」で開始位置を指定し、その塩基を起点として、3'末端がG/CでTmが55〜60℃になるPrimerを自動で選択します。<br>
       Fを選択すると入力配列に沿ったForward primerを、Rを選択すると入力配列に対するReverse primerを、指定した塩基を起点に5'→3'で設計します。<br>
       候補が複数ある場合は57.5℃に最も近いものを表示します。
     </p>
 
     <div class="auto-primer-start-row">
+
+      <div class="auto-primer-origin" aria-label="開始位置の数え方">
+
+        <input
+          type="radio"
+          id="autoPrimerOriginFront"
+          name="autoPrimerOrigin"
+          value="front"
+          checked
+        >
+        <label for="autoPrimerOriginFront">前から</label>
+
+        <input
+          type="radio"
+          id="autoPrimerOriginBack"
+          name="autoPrimerOrigin"
+          value="back"
+        >
+        <label for="autoPrimerOriginBack">後ろから</label>
+
+      </div>
 
       <input
         type="number"
@@ -2645,29 +2707,131 @@ let autoPrimerMessage = "";
 let autoPrimerMessageType = "";
 let autoPrimerDirection = "F";
 
-function buildAutoPrimerCandidates(sequence, startPosition) {
+function buildAutoPrimerCandidates(sequence, startPosition, direction, originMode, enteredPosition) {
+
   const candidates = [];
 
-  // startPositionは1始まり。slice用に0始まりへ変換。
-  const startIndex = startPosition - 1;
+  /*
+    startPosition は、入力した元配列上の1始まりの塩基番号。
+    FとRで同じ番号を基準として使用する。
+  */
 
-  for (let end = startIndex + 2; end <= sequence.length; end++) {
-    const lastBase = sequence[end - 1];
-    if (lastBase !== "G" && lastBase !== "C") continue;
+  if (direction === "F") {
 
-    const primer = sequence.slice(startIndex, end);
-    const tm = calculateTmSafe(primer);
-    if (tm === null) continue;
+    /*
+      Forward primer：
+      指定した塩基を5'端として固定し、
+      入力配列の右方向へ伸ばす。
+    */
+    const startIndex =
+      startPosition - 1;
 
-    candidates.push({
-      sequence: primer,
-      length: primer.length,
-      tm: tm,
-      gc: calculateGCPercent(primer),
-      startPosition: startPosition,
-      endPosition: end,
-      direction: autoPrimerDirection
-    });
+    for (
+      let end = startIndex + 2;
+      end <= sequence.length;
+      end++
+    ) {
+
+      const lastBase =
+        sequence[end - 1];
+
+      if (
+        lastBase !== "G" &&
+        lastBase !== "C"
+      ) {
+        continue;
+      }
+
+      const primer =
+        sequence.slice(
+          startIndex,
+          end
+        );
+
+      const tm =
+        calculateTmSafe(primer);
+
+      if (tm === null) {
+        continue;
+      }
+
+      candidates.push({
+        sequence: primer,
+        length: primer.length,
+        tm: tm,
+        gc: calculateGCPercent(primer),
+        startPosition: startPosition,
+        endPosition: end,
+        direction: "F",
+        originMode: originMode,
+        enteredPosition: enteredPosition
+      });
+    }
+
+  } else {
+
+    /*
+      Reverse primer：
+      指定した塩基を5'側の起点として固定し、
+      元配列上では左方向へ範囲を広げる。
+
+      その範囲を reverse complement して
+      Primer配列を5'→3'で出力する。
+    */
+    const rightEnd =
+      startPosition;  // sliceのend（指定塩基を含む）
+
+    for (
+      let leftIndex = rightEnd - 2;
+      leftIndex >= 0;
+      leftIndex--
+    ) {
+
+      /*
+        reverse complement後の3'末端は
+        元配列のleftIndex塩基の相補塩基になる。
+        したがって元塩基がG/CならPrimerの3'末端もG/C。
+      */
+      const originalLeftBase =
+        sequence[leftIndex];
+
+      if (
+        originalLeftBase !== "G" &&
+        originalLeftBase !== "C"
+      ) {
+        continue;
+      }
+
+      const templateRegion =
+        sequence.slice(
+          leftIndex,
+          rightEnd
+        );
+
+      const primer =
+        reverseComplement(
+          templateRegion
+        );
+
+      const tm =
+        calculateTmSafe(primer);
+
+      if (tm === null) {
+        continue;
+      }
+
+      candidates.push({
+        sequence: primer,
+        length: primer.length,
+        tm: tm,
+        gc: calculateGCPercent(primer),
+        startPosition: startPosition,
+        endPosition: leftIndex + 1,
+        direction: "R",
+        originMode: originMode,
+        enteredPosition: enteredPosition
+      });
+    }
   }
 
   return candidates;
@@ -2762,8 +2926,22 @@ function renderAutoPrimer() {
 
       <div class="auto-primer-stats">
         <span>方向：${candidate.direction}</span>
-        <span>開始：${candidate.startPosition} 塩基目</span>
-        <span>終了：${candidate.endPosition} 塩基目</span>
+        <span>
+          起点：
+          ${candidate.originMode === "back" ? "後ろから" : "前から"}
+          ${candidate.enteredPosition} 塩基目
+        </span>
+        <span>
+          元配列上：
+          ${candidate.startPosition} 塩基目
+        </span>
+        <span>
+          範囲：
+          ${candidate.direction === "F"
+            ? candidate.startPosition + "–" + candidate.endPosition
+            : candidate.endPosition + "–" + candidate.startPosition}
+          塩基目
+        </span>
         <span>Length：${candidate.length} nt</span>
         <span>Tm：${candidate.tm.toFixed(1)} ℃</span>
         <span>GC率：${candidate.gc.toFixed(1)}%</span>
@@ -2811,9 +2989,24 @@ document
       document.getElementById("autoPrimerSequence").value
     );
 
-    const startPosition = Number(
+    const enteredStartPosition = Number(
       document.getElementById("autoPrimerStart").value
     );
+
+    const originInput =
+      document.querySelector(
+        'input[name="autoPrimerOrigin"]:checked'
+      );
+
+    const originMode =
+      originInput
+        ? originInput.value
+        : "front";
+
+    const startPosition =
+      originMode === "back"
+        ? sequence.length - enteredStartPosition + 1
+        : enteredStartPosition;
 
     const directionInput =
       document.querySelector(
@@ -2824,11 +3017,6 @@ document
       directionInput
         ? directionInput.value
         : "F";
-
-    const workingSequence =
-      autoPrimerDirection === "R"
-        ? reverseComplement(sequence)
-        : sequence;
 
     result.innerHTML = "";
     autoPrimerCandidates = [];
@@ -2846,33 +3034,39 @@ document
       return;
     }
 
-    if (!Number.isInteger(startPosition) || startPosition < 1) {
+    if (
+      !Number.isInteger(enteredStartPosition) ||
+      enteredStartPosition < 1
+    ) {
       result.innerHTML = `
         <div class="error">
-          開始塩基番号は1以上の整数で入力してください。
+          開始位置は1以上の整数で入力してください。
         </div>
       `;
       return;
     }
 
-    if (startPosition > workingSequence.length) {
+    if (enteredStartPosition > sequence.length) {
       result.innerHTML = `
         <div class="error">
-          開始塩基番号が入力配列の長さを超えています。
+          指定した開始位置が入力配列の長さを超えています。
         </div>
       `;
       return;
     }
 
     autoPrimerCandidates = buildAutoPrimerCandidates(
-      workingSequence,
-      startPosition
+      sequence,
+      startPosition,
+      autoPrimerDirection,
+      originMode,
+      enteredStartPosition
     );
 
     if (autoPrimerCandidates.length === 0) {
       result.innerHTML = `
         <div class="error">
-          指定した開始位置以降に、3'末端をG/CにできるPrimer候補がありません。F/R方向または開始位置を確認してください。
+          指定した起点から、3'末端をG/CにできるPrimer候補がありません。F/R方向または開始位置を確認してください。
         </div>
       `;
       return;
