@@ -583,7 +583,7 @@
   <h1>Primer Designer</h1>
 
 
-  <h2 class="section-title">プライマー設計</h2>
+  <h2 class="section-title">一変異導入用プライマー設計</h2>
 
   <!-- DNA配列 -->
   <h2>塩基配列（全長）を入力</h2>
@@ -591,7 +591,7 @@
   
   <textarea
     id="sequence"
-    placeholder="5' → 3' の塩基配列を入力してください&#10;例：ATGAAAGCTGCT..."
+    placeholder="アミノ酸に対応する塩基配列（5' → 3'）を入力してください&#10;例：ATGAAAGCTGCT..."
   ></textarea>
 
 
@@ -636,8 +636,8 @@
 
 
    <p class="sequence-note"><br>
-        Primer F：変異コドンに加えて、5'側6塩基と3'側18塩基を含めたプライマーを作成します。3'末端がA/Tの場合は、最も近いG/Cまで3'方向に延長します。18塩基側が配列末端に達して不足する場合は、取得可能な範囲で最も長く、3'末端がG/Cになる配列を使用します。<br>
-        Primer R：Primer Fと同様の操作を、相補鎖（reverse complement）に対して行います。18塩基側が不足する場合も、取得可能な範囲で最も長く、Primerの3'末端がG/Cになる配列を使用します。<br>
+        Primer F：変異コドンに加えて、5'側6塩基と3'側18塩基を含めたプライマーを作成します。3'末端がA/Tの場合は、最も近いG/Cまで3'方向に延長します。<br>
+        Primer R：Primer Fと同様の操作を、相補鎖（reverse complement）に対して行います。<br>
         Tm：最近接塩基対法で計算します（Primer濃度 0.5 µM、Na<sup>+</sup> 50 mM）。Primer F / Rともに、<strong>変異コドン自体は含めず、変異コドンより3'側の配列のみ</strong>をTm計算に使用します。
     </p>
 
@@ -656,9 +656,8 @@
     <h2 class="section-title">自動プライマー設計</h2>
 
     <p class="sequence-note">
-      Primerの開始塩基番号を指定し、その位置から3'方向へ、3'末端がG/CでTmが55〜60℃になるPrimerを自動で選択します。
-      開始位置の初期値は1です。候補が複数ある場合は57.5℃に最も近いものを表示します。
-      配列が短く55℃に届かない場合はエラーを表示しつつ、G/C終端で取得できる最長の配列を表示します。
+      Primerの開始塩基番号を指定し、その位置から3'方向へ、3'末端がG/CでTmが55〜60℃になるPrimerを自動で選択します。<br>
+      候補が複数ある場合は57.5℃に最も近いものを表示します。
     </p>
 
     <div class="auto-primer-start-row">
@@ -681,7 +680,7 @@
     ></textarea>
 
     <button id="autoPrimerButton">
-      自動で設計
+      設計
     </button>
 
     <div id="autoPrimerResult"></div>
