@@ -3,10 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>Primer Designer</title>
-
-  
   <style>
     :root {
       --bg: #f4f7fb;
@@ -85,6 +82,14 @@
       letter-spacing: 0.01em;
     }
 
+    .section-title {
+      margin-top: 36px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+      font-size: 21px;
+      letter-spacing: -0.01em;
+    }
+
     .sequence-note {
       margin: -2px 0 14px;
       color: var(--muted);
@@ -131,6 +136,28 @@
       color: #98a2b3;
     }
 
+    .tm-textarea {
+      min-height: 120px;
+    }
+
+    .input-with-count {
+      width: 100%;
+    }
+
+    .input-with-count textarea {
+      display: block;
+    }
+
+    .char-count {
+      margin-top: 5px;
+      padding-right: 2px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.2;
+      text-align: right;
+      user-select: none;
+    }
+
     .mutation-row {
       display: grid;
       grid-template-columns: 110px auto 74px auto 74px auto;
@@ -158,6 +185,11 @@
 
     .aa-input {
       text-transform: uppercase;
+    }
+
+    #originalAA {
+      background: #f3f6fb;
+      color: var(--text);
     }
 
     button {
@@ -188,8 +220,23 @@
       transform: translateY(0);
     }
 
-    #result {
-      margin-top: 30px;
+
+    .secondary-button {
+      background: #ffffff;
+      color: var(--primary);
+      border: 1px solid #cfd8f6;
+      box-shadow: 0 7px 18px rgba(49, 87, 213, 0.10);
+    }
+
+    .secondary-button:hover {
+      background: var(--primary-soft);
+      box-shadow: 0 9px 20px rgba(49, 87, 213, 0.15);
+    }
+
+    .info,
+    .error,
+    .warning {
+      border-radius: var(--radius-md);
     }
 
     .info {
@@ -197,7 +244,6 @@
       padding: 18px 20px;
       background: var(--primary-soft);
       border: 1px solid #d9e0ff;
-      border-radius: var(--radius-md);
       color: #26345f;
       line-height: 1.9;
     }
@@ -208,41 +254,62 @@
       color: #8a1c15;
       background: var(--danger-soft);
       border: 1px solid #ffcbc7;
-      border-radius: var(--radius-md);
       font-weight: 600;
     }
 
-    table {
-      width: 100%;
+    .warning {
       margin-top: 18px;
+      padding: 16px 18px;
+      color: #8a5a00;
+      background: #fff8e6;
+      border: 1px solid #f2cf7a;
+      font-weight: 600;
+      line-height: 1.7;
+    }
+
+    /* ---------- 一変異導入用Primer ---------- */
+
+    #result {
+      margin-top: 30px;
+      overflow-x: visible;
+    }
+
+    #result table {
+      display: table;
+      width: 100%;
+      min-width: 0;
+      margin-top: 18px;
+      table-layout: fixed;
       border-collapse: separate;
       border-spacing: 0;
-      overflow: hidden;
+      overflow: visible;
+      white-space: normal;
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: var(--radius-md);
       box-shadow: 0 8px 24px rgba(25, 42, 70, 0.06);
     }
 
-    th,
-    td {
-      padding: 15px 16px;
+    #result th,
+    #result td {
+      min-width: 0;
+      padding: 15px 8px;
       border-right: 1px solid var(--line);
       border-bottom: 1px solid var(--line);
-      vertical-align: top;
-      text-align: left;
+      vertical-align: middle;
+      text-align: center;
     }
 
-    th:last-child,
-    td:last-child {
+    #result th:last-child,
+    #result td:last-child {
       border-right: 0;
     }
 
-    tbody tr:last-child td {
+    #result tbody tr:last-child td {
       border-bottom: 0;
     }
 
-    th {
+    #result th {
       color: #475467;
       background: #f8fafc;
       font-size: 12px;
@@ -252,15 +319,20 @@
       white-space: nowrap;
     }
 
-    tbody tr {
+    #result th.compact-header {
+      line-height: 1.25;
+      white-space: normal;
+    }
+
+    #result tbody tr {
       transition: background-color 0.16s ease;
     }
 
-    tbody tr:hover {
+    #result tbody tr:hover {
       background: #fbfcff;
     }
 
-    .sequence {
+    #result .sequence {
       font-family:
         "SFMono-Regular",
         Consolas,
@@ -269,18 +341,13 @@
         monospace;
       font-size: 13px;
       line-height: 1.7;
+      text-align: center;
       word-break: break-all;
       letter-spacing: 0.02em;
     }
 
-    .mutated {
-      font-weight: 700;
-      text-decoration: underline;
-    }
-
-
     .tm-value {
-      min-width: 78px;
+      min-width: 0;
       font-weight: 800;
       white-space: nowrap;
       text-align: center;
@@ -295,106 +362,6 @@
       font-weight: 900;
     }
 
-    @media (max-width: 760px) {
-      body {
-        padding: 20px 12px 40px;
-      }
-
-      .container {
-        padding: 24px 18px;
-        border-radius: 18px;
-      }
-
-      .mutation-row {
-        grid-template-columns: 1fr;
-        gap: 8px;
-      }
-
-      .mutation-row span {
-        text-align: center;
-      }
-
-      table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-      }
-
-      th,
-      td {
-        min-width: 110px;
-      }
-
-      td.sequence {
-        min-width: 260px;
-        white-space: normal;
-      }
-    }
-
-    .section-title {
-      margin-top: 36px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--line);
-      font-size: 21px;
-      letter-spacing: -0.01em;
-    }
-
-    .tm-calculator-section {
-      margin-top: 38px;
-      padding-top: 4px;
-    }
-
-    .tm-textarea {
-      min-height: 120px;
-    }
-
-    .secondary-button {
-      background: #ffffff;
-      color: var(--primary);
-      border: 1px solid #cfd8f6;
-      box-shadow: 0 7px 18px rgba(49, 87, 213, 0.10);
-    }
-
-    .secondary-button:hover {
-      background: var(--primary-soft);
-      box-shadow: 0 9px 20px rgba(49, 87, 213, 0.15);
-    }
-
-    .tm-result-box {
-      margin-top: 18px;
-      padding: 18px 20px;
-      background: var(--primary-soft);
-      border: 1px solid #d9e0ff;
-      border-radius: var(--radius-md);
-      color: #26345f;
-    }
-
-    .tm-result-number {
-      margin-top: 4px;
-      font-size: 30px;
-      font-weight: 850;
-      letter-spacing: -0.02em;
-      color: var(--text);
-    }
-
-    .tm-result-meta {
-      margin-top: 8px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-
-    /* Primer結果表はすべて中央揃え */
-    #result table th,
-    #result table td {
-      text-align: center;
-      vertical-align: middle;
-    }
-
-    #result table .sequence {
-      text-align: center;
-    }
-
     .primer-cell-content {
       display: flex;
       flex-direction: column;
@@ -403,9 +370,24 @@
       gap: 6px;
     }
 
+    .primer-sequence-text {
+      white-space: normal;
+      word-break: break-all;
+      overflow-wrap: anywhere;
+    }
+
+    .primer-action-row {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 4px;
+      max-width: 100%;
+    }
+
     .extend-button {
       width: auto;
-      margin-top: 4px;
+      margin-top: 0;
       padding: 6px 10px;
       border: 1px solid #cfd8f6;
       border-radius: 8px;
@@ -427,150 +409,13 @@
       color: #98a2b3;
       background: #f3f4f6;
       border-color: #e4e7ec;
-      cursor: default;
     }
 
     .extended-row {
       background: #fbfcff;
     }
 
-
-    .complement-section {
-      margin-top: 38px;
-      padding-top: 4px;
-    }
-
-    .complement-result-box {
-      margin-top: 18px;
-      padding: 18px 20px;
-      background: var(--primary-soft);
-      border: 1px solid #d9e0ff;
-      border-radius: var(--radius-md);
-      color: #26345f;
-    }
-
-    .complement-label {
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .complement-sequence-output {
-      margin-top: 8px;
-      font-family:
-        "SFMono-Regular",
-        Consolas,
-        "Liberation Mono",
-        Menlo,
-        monospace;
-      font-size: 16px;
-      font-weight: 700;
-      line-height: 1.8;
-      letter-spacing: 0.03em;
-      word-break: break-all;
-      color: var(--text);
-    }
-
-    #originalAA {
-      background: #f3f6fb;
-      color: var(--text);
-    }
-
-
-    .warning {
-      margin-top: 18px;
-      padding: 16px 18px;
-      color: #8a5a00;
-      background: #fff8e6;
-      border: 1px solid #f2cf7a;
-      border-radius: var(--radius-md);
-      font-weight: 600;
-      line-height: 1.7;
-    }
-
-
-    .auto-primer-section {
-      margin-top: 38px;
-      padding-top: 4px;
-    }
-
-    .auto-primer-result-box {
-      margin-top: 18px;
-      padding: 20px;
-      background: var(--primary-soft);
-      border: 1px solid #d9e0ff;
-      border-radius: var(--radius-md);
-      color: #26345f;
-    }
-
-    .auto-primer-sequence {
-      margin-top: 10px;
-      padding: 14px 16px;
-      background: #ffffff;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-      font-size: 15px;
-      font-weight: 700;
-      line-height: 1.8;
-      letter-spacing: 0.03em;
-      word-break: break-all;
-      color: var(--text);
-    }
-
-    .auto-primer-stats {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px 18px;
-      margin-top: 12px;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .auto-primer-controls {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    .auto-primer-controls button {
-      margin-top: 0;
-    }
-
-    @media (max-width: 760px) {
-      .auto-primer-controls {
-        grid-template-columns: 1fr;
-      }
-    }
-
-
-    .auto-primer-start-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin: 0 0 14px;
-      padding: 14px 16px;
-      background: var(--surface-soft);
-      border: 1px solid var(--line);
-      border-radius: var(--radius-md);
-      font-size: 14px;
-      font-weight: 700;
-    }
-
-    .auto-primer-start-row input {
-      width: 90px;
-      height: 42px;
-      padding: 0 10px;
-      border-radius: var(--radius-sm);
-      background: #fff;
-      text-align: center;
-      font-size: 15px;
-      font-weight: 800;
-    }
-
+    /* ---------- コピーアイコン ---------- */
 
     .copy-button {
       width: 30px;
@@ -607,239 +452,66 @@
       pointer-events: none;
     }
 
-    .copy-row {
-      display: flex;
-      justify-content: center;
-      margin-top: 8px;
+    /* ---------- 自動Primer ---------- */
+
+    .auto-primer-section,
+    .tm-calculator-section,
+    .complement-section,
+    .standalone-restriction-section {
+      margin-top: 38px;
+      padding-top: 4px;
     }
 
-    .sequence-with-copy {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      width: 100%;
-    }
-
-    .sequence-with-copy .auto-primer-sequence,
-    .sequence-with-copy .complement-sequence-output {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .sequence-with-copy .copy-button {
-      flex: 0 0 auto;
-    }
-
-
-    /* ===== 今回のレイアウト調整 ===== */
-
-    /* 一変異導入用結果表：Primer列により多くの幅を割り当てる */
-    #result {
-      overflow-x: auto;
-    }
-
-    #result table {
-      table-layout: fixed;
-      min-width: 1080px;
-    }
-
-    #result th.compact-header {
-      line-height: 1.25;
-      white-space: normal;
-    }
-
-    #result td.primer-sequence-cell {
-      min-width: 275px;
-    }
-
-    #result td.primer-sequence-cell .primer-cell-content > div:first-child {
-      white-space: normal;
-      word-break: break-all;
-      overflow-wrap: anywhere;
-    }
-
-    /* 自動Primer：コピーアイコンを配列枠の内側右端へ */
-    .auto-primer-sequence {
-      position: relative;
-      padding-right: 54px;
-    }
-
-    .auto-primer-sequence .copy-button {
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-    }
-
-    .auto-primer-sequence .copy-button:hover {
-      transform: translateY(-50%);
-    }
-
-    /* 逆向き相補鎖：3'のすぐ右にコピーアイコン */
-    .complement-output-inline {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      max-width: 100%;
-      margin-top: 8px;
-    }
-
-    .complement-output-inline .complement-sequence-output {
-      margin-top: 0;
-    }
-
-    .complement-output-inline .copy-button {
-      flex: 0 0 auto;
-    }
-
-    @media (max-width: 760px) {
-      #result table {
-        min-width: 1080px;
-      }
-    }
-
-
-    /* ===== 結果表：横スクロールなしで画面幅に収める ===== */
-    #result {
-      overflow-x: visible;
-    }
-
-    #result table {
-      width: 100%;
-      min-width: 0;
-      table-layout: fixed;
-      display: table;
-      overflow: visible;
-      white-space: normal;
-    }
-
-    #result th,
-    #result td {
-      min-width: 0;
-      padding-left: 8px;
-      padding-right: 8px;
-    }
-
-    #result td.primer-sequence-cell {
-      min-width: 0;
-    }
-
-    #result td.primer-sequence-cell .primer-cell-content > .primer-sequence-text {
-      white-space: normal;
-      word-break: break-all;
-      overflow-wrap: anywhere;
-    }
-
-    /* 一変異導入用：G/C延長ボタンとコピーアイコンを横並び */
-    .primer-action-row {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      margin-top: 4px;
-      max-width: 100%;
-    }
-
-    .primer-action-row .extend-button,
-    .primer-action-row .copy-button {
-      margin-top: 0;
-    }
-
-    @media (max-width: 760px) {
-      #result table {
-        display: table;
-        width: 100%;
-        min-width: 0;
-        overflow: visible;
-        white-space: normal;
-      }
-
-      #result th,
-      #result td {
-        min-width: 0;
-        padding: 9px 5px;
-        font-size: 11px;
-      }
-
-      #result td.sequence {
-        min-width: 0;
-        white-space: normal;
-      }
-
-      #result .extend-button {
-        padding: 5px 7px;
-        font-size: 10px;
-      }
-
-      .primer-action-row {
-        gap: 4px;
-      }
-    }
-
-
-    /* 最終優先：表は横スクロールさせない */
-    #result table {
-      min-width: 0 !important;
-      width: 100% !important;
-      table-layout: fixed !important;
-      display: table !important;
-      white-space: normal !important;
-    }
-
-    #result {
-      overflow-x: visible !important;
-    }
-
-    #result td.primer-sequence-cell .primer-sequence-text {
-      white-space: normal !important;
-      word-break: break-all !important;
-      overflow-wrap: anywhere !important;
-    }
-
-
-    /* ===== 入力文字数 ===== */
-    .input-with-count {
-      width: 100%;
-    }
-
-    .input-with-count textarea {
-      display: block;
-    }
-
-    .char-count {
-      margin-top: 5px;
-      padding-right: 2px;
-      color: var(--muted);
-      font-size: 11px;
-      line-height: 1.2;
-      text-align: right;
-      user-select: none;
-    }
-
-    /* ===== 自動Primer F/R切替 ===== */
     .auto-primer-start-row {
+      display: flex;
+      align-items: center;
       justify-content: flex-start;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 0 0 14px;
+      padding: 14px 16px;
+      background: var(--surface-soft);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 700;
     }
 
+    #autoPrimerStart {
+      width: 90px;
+      height: 42px;
+      padding: 0 10px;
+      border-radius: var(--radius-sm);
+      background: #fff;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .auto-primer-origin,
     .auto-primer-direction {
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      margin-left: 8px;
       padding: 3px;
       background: #eef2f7;
       border: 1px solid var(--line);
       border-radius: 10px;
     }
 
+    .auto-primer-direction {
+      margin-left: 8px;
+    }
+
+    .auto-primer-origin input,
     .auto-primer-direction input {
       position: absolute;
       opacity: 0;
       pointer-events: none;
     }
 
+    .auto-primer-origin label,
     .auto-primer-direction label {
-      min-width: 40px;
       padding: 6px 11px;
       border-radius: 7px;
       color: var(--muted);
@@ -855,25 +527,87 @@
         box-shadow 0.15s ease;
     }
 
+    .auto-primer-origin label {
+      min-width: 54px;
+    }
+
+    .auto-primer-direction label {
+      min-width: 40px;
+    }
+
+    .auto-primer-origin input:checked + label,
     .auto-primer-direction input:checked + label {
       color: #ffffff;
       background: var(--primary);
       box-shadow: 0 3px 8px rgba(49, 87, 213, 0.22);
     }
 
-    /* ===== 制限酵素サイト付加 ===== */
-    .restriction-section {
-      margin-top: 28px;
+    .auto-primer-result-box {
+      margin-top: 18px;
       padding: 20px;
-      background: var(--surface-soft);
-      border: 1px solid var(--line);
+      background: var(--primary-soft);
+      border: 1px solid #d9e0ff;
       border-radius: var(--radius-md);
+      color: #26345f;
     }
 
-    .restriction-section h3 {
-      margin: 0 0 7px;
-      font-size: 16px;
-      font-weight: 800;
+    .auto-primer-sequence {
+      position: relative;
+      margin-top: 10px;
+      padding: 14px 54px 14px 16px;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        Menlo,
+        monospace;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.8;
+      letter-spacing: 0.03em;
+      word-break: break-all;
+      color: var(--text);
+    }
+
+    .auto-primer-sequence .copy-button {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .auto-primer-sequence .copy-button:hover {
+      transform: translateY(-50%);
+    }
+
+    .auto-primer-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .auto-primer-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .auto-primer-controls button {
+      margin-top: 0;
+    }
+
+    /* ---------- 制限酵素 ---------- */
+
+    .standalone-restriction-section {
+      padding-top: 0;
     }
 
     .restriction-controls {
@@ -906,8 +640,8 @@
     }
 
     .restriction-button {
-      margin-top: 0;
       height: 46px;
+      margin-top: 0;
       padding-top: 0;
       padding-bottom: 0;
     }
@@ -959,75 +693,129 @@
       font-weight: 700;
     }
 
+    /* ---------- Tm / reverse complement ---------- */
+
+    .tm-result-box,
+    .complement-result-box {
+      margin-top: 18px;
+      padding: 18px 20px;
+      background: var(--primary-soft);
+      border: 1px solid #d9e0ff;
+      border-radius: var(--radius-md);
+      color: #26345f;
+    }
+
+    .tm-result-number {
+      margin-top: 4px;
+      font-size: 30px;
+      font-weight: 850;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .tm-result-meta {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .complement-label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .complement-sequence-output {
+      margin-top: 8px;
+      font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        Menlo,
+        monospace;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.8;
+      letter-spacing: 0.03em;
+      word-break: break-all;
+      color: var(--text);
+    }
+
+    .complement-output-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      max-width: 100%;
+      margin-top: 8px;
+    }
+
+    .complement-output-inline .complement-sequence-output {
+      margin-top: 0;
+    }
+
+    .complement-output-inline .copy-button {
+      flex: 0 0 auto;
+    }
+
     @media (max-width: 760px) {
-      .auto-primer-direction {
-        margin-left: 0;
+      body {
+        padding: 20px 12px 40px;
       }
 
+      .container {
+        padding: 24px 18px;
+        border-radius: 18px;
+      }
+
+      .mutation-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .mutation-row span {
+        text-align: center;
+      }
+
+      #result table {
+        display: table;
+        width: 100%;
+        min-width: 0;
+        overflow: visible;
+        white-space: normal;
+      }
+
+      #result th,
+      #result td {
+        min-width: 0;
+        padding: 9px 5px;
+        font-size: 11px;
+      }
+
+      #result td.sequence {
+        min-width: 0;
+        white-space: normal;
+      }
+
+      #result .extend-button {
+        padding: 5px 7px;
+        font-size: 10px;
+      }
+
+      .primer-action-row {
+        gap: 4px;
+      }
+
+      .auto-primer-controls,
       .restriction-controls {
         grid-template-columns: 1fr;
       }
+
+      .auto-primer-direction {
+        margin-left: 0;
+      }
     }
-
-
-    .standalone-restriction-section {
-      margin-top: 38px;
-      padding: 0;
-      background: transparent;
-      border: 0;
-      border-radius: 0;
-    }
-
-    .standalone-restriction-section .section-title {
-      margin-top: 36px;
-    }
-
-
-    /* ===== 自動Primer 開始位置の数え方 ===== */
-    .auto-primer-origin {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 3px;
-      background: #eef2f7;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-    }
-
-    .auto-primer-origin input {
-      position: absolute;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .auto-primer-origin label {
-      min-width: 54px;
-      padding: 6px 11px;
-      border-radius: 7px;
-      color: var(--muted);
-      background: transparent;
-      font-size: 13px;
-      font-weight: 800;
-      line-height: 1.2;
-      text-align: center;
-      cursor: pointer;
-      transition:
-        color 0.15s ease,
-        background-color 0.15s ease,
-        box-shadow 0.15s ease;
-    }
-
-    .auto-primer-origin input:checked + label {
-      color: #ffffff;
-      background: var(--primary);
-      box-shadow: 0 3px 8px rgba(49, 87, 213, 0.22);
-    }
-
   </style>
-
 </head>
-
-
 <body>
 
 <div class="container">
@@ -1294,2008 +1082,999 @@
 
 
 <script>
-/* =========================================================
-   1. 標準遺伝暗号表（DNA表記）
-========================================================= */
-
-const CODON_TABLE = {
-  "TTT":"F", "TTC":"F", "TTA":"L", "TTG":"L",
-  "TCT":"S", "TCC":"S", "TCA":"S", "TCG":"S",
-  "TAT":"Y", "TAC":"Y", "TAA":"*", "TAG":"*",
-  "TGT":"C", "TGC":"C", "TGA":"*", "TGG":"W",
-
-  "CTT":"L", "CTC":"L", "CTA":"L", "CTG":"L",
-  "CCT":"P", "CCC":"P", "CCA":"P", "CCG":"P",
-  "CAT":"H", "CAC":"H", "CAA":"Q", "CAG":"Q",
-  "CGT":"R", "CGC":"R", "CGA":"R", "CGG":"R",
-
-  "ATT":"I", "ATC":"I", "ATA":"I", "ATG":"M",
-  "ACT":"T", "ACC":"T", "ACA":"T", "ACG":"T",
-  "AAT":"N", "AAC":"N", "AAA":"K", "AAG":"K",
-  "AGT":"S", "AGC":"S", "AGA":"R", "AGG":"R",
-
-  "GTT":"V", "GTC":"V", "GTA":"V", "GTG":"V",
-  "GCT":"A", "GCC":"A", "GCA":"A", "GCG":"A",
-  "GAT":"D", "GAC":"D", "GAA":"E", "GAG":"E",
-  "GGT":"G", "GGC":"G", "GGA":"G", "GGG":"G"
-};
-
-
-/* =========================================================
-   2. E. coli K-12 Codon Usage
-   画像のUはDNA表記のTに置換
-========================================================= */
-
-const CODON_USAGE = {
-  "TTT":0.57, "TTC":0.43,
-  "TTA":0.15, "TTG":0.12,
-  "CTT":0.12, "CTC":0.10, "CTA":0.05, "CTG":0.46,
-
-  "TCT":0.11, "TCC":0.11, "TCA":0.15, "TCG":0.16,
-  "AGT":0.14, "AGC":0.33,
-
-  "TAT":0.53, "TAC":0.47,
-
-  "TAA":0.64, "TAG":0.00, "TGA":0.36,
-
-  "TGT":0.42, "TGC":0.58,
-  "TGG":1.00,
-
-  "CCT":0.17, "CCC":0.13, "CCA":0.14, "CCG":0.55,
-
-  "CAT":0.55, "CAC":0.45,
-  "CAA":0.30, "CAG":0.70,
-
-  "CGT":0.36, "CGC":0.44, "CGA":0.07, "CGG":0.07,
-  "AGA":0.02, "AGG":0.03,
-
-  "ATT":0.58, "ATC":0.35, "ATA":0.07,
-  "ATG":1.00,
-
-  "ACT":0.16, "ACC":0.47, "ACA":0.13, "ACG":0.24,
-
-  "AAT":0.47, "AAC":0.53,
-  "AAA":0.73, "AAG":0.27,
-
-  "GTT":0.25, "GTC":0.18, "GTA":0.17, "GTG":0.40,
-
-  "GCT":0.11, "GCC":0.31, "GCA":0.21, "GCG":0.38,
-
-  "GAT":0.65, "GAC":0.35,
-  "GAA":0.70, "GAG":0.30,
-
-  "GGT":0.29, "GGC":0.46, "GGA":0.13, "GGG":0.12
-};
-
-
-/* =========================================================
-   3. アミノ酸 → コドン一覧
-========================================================= */
-
-const AA_TO_CODONS = {};
-
-for (const codon in CODON_TABLE) {
-  const aa = CODON_TABLE[codon];
-
-  if (!AA_TO_CODONS[aa]) {
-    AA_TO_CODONS[aa] = [];
-  }
-
-  AA_TO_CODONS[aa].push(codon);
-}
-
-
-/* =========================================================
-   4. 配列関連関数
-========================================================= */
-
-function complement(base) {
-  const map = {
-    "A":"T",
-    "T":"A",
-    "G":"C",
-    "C":"G"
-  };
-
-  return map[base];
-}
-
-
-function reverseComplement(sequence) {
-  let result = "";
-
-  for (let i = sequence.length - 1; i >= 0; i--) {
-    result += complement(sequence[i]);
-  }
-
-  return result;
-}
-
-
-function cleanSequence(sequence) {
-  return sequence
-    .toUpperCase()
-    .replace(/\s/g, "");
-}
-
-
-function getCodonStart(position) {
-  return (position - 1) * 3;
-}
-
-
-function countBaseChanges(originalCodon, mutantCodon) {
-  let count = 0;
-
-  for (let i = 0; i < 3; i++) {
-    if (originalCodon[i] !== mutantCodon[i]) {
-      count++;
-    }
-  }
-
-  return count;
-}
-
-
-/* =========================================================
-   最近接塩基対法によるTm計算
-
-   Tm = (1000 × ΔH) /
-        (-10.8 + ΔS + 1.987 × ln(Conc/4))
-        - 273.15
-        + 16.6 × log10([Na+])
-
-   標準条件：
-   Primer concentration = 0.5 µM
-   Na+ concentration     = 50 mM
-========================================================= */
-
-const NN_PARAMS = {
-  "AA": { dH: -9.1,  dS: -24.0 },
-  "TT": { dH: -9.1,  dS: -24.0 },
-
-  "AT": { dH: -8.6,  dS: -23.9 },
-
-  "TA": { dH: -6.0,  dS: -16.9 },
-
-  "CA": { dH: -5.8,  dS: -12.9 },
-  "TG": { dH: -5.8,  dS: -12.9 },
-
-  "GT": { dH: -6.5,  dS: -17.3 },
-  "AC": { dH: -6.5,  dS: -17.3 },
-
-  "CT": { dH: -7.8,  dS: -20.8 },
-  "AG": { dH: -7.8,  dS: -20.8 },
-
-  "GA": { dH: -5.6,  dS: -13.5 },
-  "TC": { dH: -5.6,  dS: -13.5 },
-
-  "CG": { dH: -11.9, dS: -27.8 },
-
-  "GC": { dH: -11.1, dS: -26.7 },
-
-  "GG": { dH: -11.0, dS: -26.6 },
-  "CC": { dH: -11.0, dS: -26.6 }
-};
-
-const PRIMER_CONC_M = 0.5e-6;
-const NA_CONC_M = 0.05;
-
-
-function calculateTm(sequence) {
-
-  let deltaH = 0;
-  let deltaS = 0;
-
-  for (let i = 0; i < sequence.length - 1; i++) {
-
-    const pair = sequence.slice(i, i + 2);
-    const params = NN_PARAMS[pair];
-
-    if (!params) {
-      throw new Error(
-        "Tm計算中に認識できない塩基対が見つかりました：" + pair
-      );
-    }
-
-    deltaH += params.dH;
-    deltaS += params.dS;
-  }
-
-  const denominator =
-    -10.8 +
-    deltaS +
-    1.987 * Math.log(PRIMER_CONC_M / 4);
-
-  const tm =
-    (1000 * deltaH) / denominator
-    - 273.15
-    + 16.6 * Math.log10(NA_CONC_M);
-
-  return tm;
-}
-
-
-
-/* =========================================================
-   GC率
-========================================================= */
-function calculateGCPercent(sequence) {
-  if (sequence.length === 0) return 0;
-
-  let gcCount = 0;
-  for (const base of sequence) {
-    if (base === "G" || base === "C") gcCount++;
-  }
-
-  return (gcCount / sequence.length) * 100;
-}
-
-function calculateTmSafe(sequence) {
-
-  if (sequence.length < 2) {
-    return null;
-  }
-
-  return calculateTm(sequence);
-}
-
-
-/* =========================================================
-   5. Primer末端のGC延長
-========================================================= */
-
-function extendForwardEnd(sequence, end) {
-  // sliceのendは「含まない位置」なので、末端塩基は end - 1
-  while (
-    end < sequence.length &&
-    sequence[end - 1] !== "G" &&
-    sequence[end - 1] !== "C"
-  ) {
-    end++;
-  }
-
-  return end;
-}
-
-
-function extendReverseStart(sequence, start) {
-  // coding strand上で5'方向へ延長する
-  while (
-    start > 0 &&
-    sequence[start] !== "G" &&
-    sequence[start] !== "C"
-  ) {
-    start--;
-  }
-
-  return start;
-}
-
-
-/* =========================================================
-   6. Primer作成
-========================================================= */
-
-function createPrimerPair(originalSequence, codonStart, mutantCodon) {
-
-  const warnings = [];
-
-  const mutatedSequence =
-    originalSequence.slice(0, codonStart) +
-    mutantCodon +
-    originalSequence.slice(codonStart + 3);
-
-
-  /* ---------- Forward ----------
-     基本：
-     5'側6塩基 + 変異3塩基 + 3'側18塩基
-  */
-
-  const desiredForwardStart =
-    codonStart - 6;
-
-  const desiredForwardEnd =
-    codonStart + 3 + 18;
-
-  let forwardStart =
-    Math.max(0, desiredForwardStart);
-
-  let forwardEnd =
-    Math.min(
-      mutatedSequence.length,
-      desiredForwardEnd
-    );
-
-
-  if (desiredForwardStart < 0) {
-    warnings.push(
-      "Primer F：変異コドンの5'側6塩基を確保できないため、配列の5'末端から作成しています。"
-    );
-  }
-
-  if (desiredForwardEnd > mutatedSequence.length) {
-
-    /*
-      3'側18塩基を確保できない場合：
-      配列末端から5'方向へ戻り、
-      最も長く取れるG/C終端位置を探す
-    */
-
-    let gcEnd =
-      mutatedSequence.length;
-
-    while (
-      gcEnd > codonStart + 3 &&
-      mutatedSequence[gcEnd - 1] !== "G" &&
-      mutatedSequence[gcEnd - 1] !== "C"
-    ) {
-      gcEnd--;
-    }
-
-    if (
-      gcEnd > codonStart + 3 &&
-      (
-        mutatedSequence[gcEnd - 1] === "G" ||
-        mutatedSequence[gcEnd - 1] === "C"
-      )
-    ) {
-      forwardEnd =
-        gcEnd;
-
-      warnings.push(
-        "Primer F：変異コドンの3'側18塩基を確保できないため、取得可能な範囲で最も長く、3'末端がG/Cになる位置までで作成しています。"
-      );
-
-    } else {
-
-      forwardEnd =
-        mutatedSequence.length;
-
-      warnings.push(
-        "Primer F：変異コドンの3'側18塩基を確保できず、利用可能な3'側領域にG/C終端位置もないため、配列末端までで作成しています。"
-      );
-    }
-
-  } else {
-
-    /*
-      18塩基確保できる場合：
-      3'末端がA/Tなら次のG/Cまで延長
-    */
-    forwardEnd =
-      extendForwardEnd(
-        mutatedSequence,
-        forwardEnd
-      );
-  }
-
-
-  const primerF =
-    mutatedSequence.slice(
-      forwardStart,
-      forwardEnd
-    );
-
-  const mutationStartF =
-    codonStart - forwardStart;
-
-
-  /* ---------- Reverse ----------
-     coding strand上で
-     5'側18塩基 + 変異3塩基 + 3'側6塩基
-     を切り出してReverse Complement
-  */
-
-  const desiredReverseStart =
-    codonStart - 18;
-
-  const desiredReverseEnd =
-    codonStart + 3 + 6;
-
-  let reverseStart =
-    Math.max(0, desiredReverseStart);
-
-  let reverseEnd =
-    Math.min(
-      mutatedSequence.length,
-      desiredReverseEnd
-    );
-
-
-  if (desiredReverseStart < 0) {
-
-    /*
-      Primer Rの18塩基側が不足する場合：
-      reverse complement後の3'末端がG/Cになるよう、
-      coding strandの5'端側から最初のG/Cを探す。
-      これが、取得可能な中で最長のPrimerになる。
-    */
-
-    let gcStart = 0;
-
-    while (
-      gcStart < codonStart &&
-      mutatedSequence[gcStart] !== "G" &&
-      mutatedSequence[gcStart] !== "C"
-    ) {
-      gcStart++;
-    }
-
-    if (
-      gcStart < codonStart &&
-      (
-        mutatedSequence[gcStart] === "G" ||
-        mutatedSequence[gcStart] === "C"
-      )
-    ) {
-      reverseStart =
-        gcStart;
-
-      warnings.push(
-        "Primer R：変異コドンの18塩基側を確保できないため、取得可能な範囲で最も長く、Primerの3'末端がG/Cになる位置までで作成しています。"
-      );
-
-    } else {
-
-      reverseStart = 0;
-
-      warnings.push(
-        "Primer R：変異コドンの18塩基側を確保できず、利用可能な領域にG/C終端位置もないため、配列の5'末端までで作成しています。"
-      );
-    }
-  }
-
-  if (desiredReverseEnd > mutatedSequence.length) {
-    warnings.push(
-      "Primer R：変異コドンの3'側6塩基を確保できないため、配列の3'末端までで作成しています。"
-    );
-  }
-
-
-  /*
-    18塩基側を十分確保できる場合のみ、
-    coding strand上で5'方向へG/Cまで延長
-  */
-  if (desiredReverseStart >= 0) {
-    reverseStart =
-      extendReverseStart(
-        mutatedSequence,
-        reverseStart
-      );
-  }
-
-
-  const reverseTemplate =
-    mutatedSequence.slice(
-      reverseStart,
-      reverseEnd
-    );
-
-  const primerR =
-    reverseComplement(
-      reverseTemplate
-    );
-
-
-  /*
-    Reverse primer中の変異位置。
-    reverseTemplate内の変異コドン位置を反転して求める。
-  */
-  const mutationOffsetInTemplate =
-    codonStart - reverseStart;
-
-  const mutationStartR =
-    reverseTemplate.length -
-    (mutationOffsetInTemplate + 3);
-
-
-  return {
-    primerF,
-    primerR,
-    mutatedSequence,
-
-    forwardStart,
-    forwardEnd,
-
-    reverseStart,
-    reverseEnd,
-
-    mutationStartF,
-    mutationStartR,
-
-    warnings
-  };
-}
-
-
-/* =========================================================
-   7. 変異コドンを赤字＋太字
-   F/Rともに5'端から7〜9塩基目
-========================================================= */
-
-function highlightMutation(primer, mutationStart) {
-
-  const mutationEnd =
-    mutationStart + 3;
-
-  if (
-    mutationStart < 0 ||
-    mutationEnd > primer.length
-  ) {
-    return primer;
-  }
-
-  const before =
-    primer.slice(0, mutationStart);
-
-  const mutation =
-    primer.slice(
-      mutationStart,
-      mutationEnd
-    );
-
-  const after =
-    primer.slice(mutationEnd);
-
-  return (
-    before +
-    '<span class="mutation-codon">' +
-    mutation +
-    '</span>' +
-    after
-  );
-}
-
-
-/* =========================================================
-   Primerを「次のG/C」まで3'側へ延長する
-========================================================= */
-
-/*
-  Primer F：
-  coding strandの右方向へ進み、
-  現在の3'末端よりさらに先にある最初のG/Cまで延長
-*/
-function extendForwardToNextGC(data) {
-
-  let position = data.forwardEnd;
-
-  while (
-    position < data.mutatedSequence.length &&
-    data.mutatedSequence[position] !== "G" &&
-    data.mutatedSequence[position] !== "C"
-  ) {
-    position++;
-  }
-
-  if (position >= data.mutatedSequence.length) {
-    return null;
-  }
-
-  const newForwardEnd = position + 1;
-
-  return {
-    primerF:
-      data.mutatedSequence.slice(
-        data.forwardStart,
-        newForwardEnd
-      ),
-
-    forwardEnd: newForwardEnd
-  };
-}
-
-
-/*
-  Primer R：
-  Primerの3'側を延長することは、
-  coding strand上では左（5'側）へ進むことに相当する。
-  その方向で次のG/Cまで延長してからreverse complementする。
-*/
-function extendReverseToNextGC(data) {
-
-  let position = data.reverseStart - 1;
-
-  while (
-    position >= 0 &&
-    data.mutatedSequence[position] !== "G" &&
-    data.mutatedSequence[position] !== "C"
-  ) {
-    position--;
-  }
-
-  if (position < 0) {
-    return null;
-  }
-
-  const newReverseStart = position;
-
-  const reverseTemplate =
-    data.mutatedSequence.slice(
-      newReverseStart,
-      data.reverseEnd
-    );
-
-  return {
-    primerR:
-      reverseComplement(reverseTemplate),
-
-    reverseStart: newReverseStart
-  };
-}
-
-
-/* 各表示行のPrimer情報を保持 */
-let primerRowData = {};
-let primerVariantCounters = {};
-
-
-/*
-  Primerセル内の表示を作る
-*/
-function makePrimerCell(
-  primer,
-  mutationStart,
-  rowId,
-  direction
-) {
-
-  return `
-    <div class="primer-cell-content">
-
-      <div class="primer-sequence-text">
-        ${highlightMutation(
-          primer,
-          mutationStart
-        )}
-      </div>
-
-      <div class="primer-action-row">
-
-        <button
-          type="button"
-          class="extend-button"
-          onclick="extendPrimerRow('${rowId}', '${direction}', this)"
-        >
-          次のG/Cまで延長する
-        </button>
-
-        <button
-          type="button"
-          class="copy-button"
-          aria-label="配列をコピー"
-          title="配列をコピー"
-          onclick="copySequenceToClipboard('${primer}', this)"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="9" y="9" width="10" height="10" rx="2"
-              fill="none" stroke="currentColor" stroke-width="1.8"></rect>
-            <path d="M15 9V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"
-              fill="none" stroke="currentColor" stroke-width="1.8"
-              stroke-linecap="round"></path>
-          </svg>
-        </button>
-
-      </div>
-
-    </div>
-  `;
-}
-
-
-/*
-  延長ボタンを押したとき、
-  元の候補の下に 1-2、1-3... の行を追加する
-*/
-function extendPrimerRow(rowId, direction, button) {
-
-  const source =
-    primerRowData[rowId];
-
-  if (!source) {
-    return;
-  }
-
-
-  let newData = {
-    ...source
-  };
-
-
-  if (direction === "F") {
-
-    const extended =
-      extendForwardToNextGC(source);
-
-    if (!extended) {
-      button.disabled = true;
-      button.textContent = "これ以上G/Cなし";
-      return;
-    }
-
-    newData.primerF =
-      extended.primerF;
-
-    newData.forwardEnd =
-      extended.forwardEnd;
-
-  } else {
-
-    const extended =
-      extendReverseToNextGC(source);
-
-    if (!extended) {
-      button.disabled = true;
-      button.textContent = "これ以上G/Cなし";
-      return;
-    }
-
-    newData.primerR =
-      extended.primerR;
-
-    newData.reverseStart =
-      extended.reverseStart;
-  }
-
-
-  /* 同じ行から同じ方向への重複追加を防ぐ */
-  button.disabled = true;
-  button.textContent = "延長済み";
-
-
-  const rootNo =
-    source.rootNo;
-
-  if (!primerVariantCounters[rootNo]) {
-    primerVariantCounters[rootNo] = 1;
-  }
-
-  primerVariantCounters[rootNo]++;
-
-  const variantNo =
-    primerVariantCounters[rootNo];
-
-  const displayNo =
-    `${rootNo}-${variantNo}`;
-
-  const newRowId =
-    `primer-row-${rootNo}-${variantNo}`;
-
-
-  newData.rowId =
-    newRowId;
-
-  newData.displayNo =
-    displayNo;
-
-  primerRowData[newRowId] =
-    newData;
-
-
-  const tmF =
-    calculateTmSafe(newData.primerF.slice(newData.mutationStartF + 3));
-
-  const tmR =
-    calculateTmSafe(newData.primerR.slice(newData.mutationStartR + 3));
-
-
-  const newRowHtml = `
-    <tr
-      class="extended-row"
-      id="${newRowId}"
-      data-root-no="${rootNo}"
-    >
-      <td>${displayNo}</td>
-
-      <td class="sequence">
-        ${newData.mutantCodon}
-      </td>
-
-      <td>
-        ${newData.usagePercent}%
-      </td>
-
-      <td>
-        ${newData.baseChanges}
-      </td>
-
-      <td class="sequence primer-sequence-cell">
-        ${makePrimerCell(
-          newData.primerF,
-          newData.mutationStartF,
-          newRowId,
-          "F"
-        )}
-      </td>
-
-      <td class="tm-value">
-        ${tmF === null ? "N/A" : tmF.toFixed(1)}
-      </td>
-
-      <td class="sequence primer-sequence-cell">
-        ${makePrimerCell(
-          newData.primerR,
-          newData.mutationStartR,
-          newRowId,
-          "R"
-        )}
-      </td>
-
-      <td class="tm-value">
-        ${tmR === null ? "N/A" : tmR.toFixed(1)}
-      </td>
-    </tr>
-  `;
-
-
-  /*
-    同じNo.グループの一番最後に追加する。
-    例：1 → 1-2 → 1-3
-  */
-  const rows =
-    document.querySelectorAll(
-      `tr[data-root-no="${rootNo}"]`
-    );
-
-  const lastRow =
-    rows[rows.length - 1];
-
-  lastRow.insertAdjacentHTML(
-    "afterend",
-    newRowHtml
-  );
-}
-
-
-
-/* 残基番号から元アミノ酸を自動表示 */
-function updateOriginalAA() {
-  const sequence = cleanSequence(
-    document.getElementById("sequence").value
-  );
-
-  const position = Number(
-    document.getElementById("position").value
-  );
-
-  const originalAAInput =
-    document.getElementById("originalAA");
-
-  if (
-    sequence.length === 0 ||
-    !Number.isInteger(position) ||
-    position < 1
-  ) {
-    originalAAInput.value = "";
-    return;
-  }
-
-  const codonStart = getCodonStart(position);
-
-  if (codonStart + 3 > sequence.length) {
-    originalAAInput.value = "";
-    return;
-  }
-
-  const codon = sequence.slice(
-    codonStart,
-    codonStart + 3
-  );
-
-  if (!/^[ATGC]{3}$/.test(codon)) {
-    originalAAInput.value = "";
-    return;
-  }
-
-  originalAAInput.value =
-    CODON_TABLE[codon] || "";
-}
-
-document
-  .getElementById("position")
-  .addEventListener("input", updateOriginalAA);
-
-document
-  .getElementById("sequence")
-  .addEventListener("input", updateOriginalAA);
-
-
-/* =========================================================
-   8. エラー表示
-========================================================= */
-
-function showError(message) {
-  document.getElementById("result").innerHTML = `
-    <div class="error">
-      ${message}
-    </div>
-  `;
-}
-
-
-/* =========================================================
-   9. ボタン処理
-========================================================= */
-
-document
-  .getElementById("designButton")
-  .addEventListener("click", function () {
-
-    const result =
-      document.getElementById("result");
-
-    result.innerHTML = "";
-
-    primerRowData = {};
-    primerVariantCounters = {};
-
-    const sequence =
-      cleanSequence(
-        document.getElementById("sequence").value
-      );
-
-    const position =
-      Number(
-        document.getElementById("position").value
-      );
-
-    const originalAA =
-      document
-        .getElementById("originalAA")
-        .value
-        .trim()
-        .toUpperCase();
-
-    const mutantAA =
-      document
-        .getElementById("mutantAA")
-        .value
-        .trim()
-        .toUpperCase();
-
-
-    /* ---------- 入力チェック ---------- */
-
-    if (sequence.length === 0) {
-      showError("塩基配列を入力してください。");
-      return;
-    }
-
-    if (!/^[ATGC]+$/.test(sequence)) {
-      showError("塩基配列にはA、T、G、Cのみ使用してください。");
-      return;
-    }
-
-    if (sequence.length % 3 !== 0) {
-      showError("塩基配列の長さが3の倍数ではありません。");
-      return;
-    }
-
-    if (!Number.isInteger(position) || position < 1) {
-      showError("残基番号を正しく入力してください。");
-      return;
-    }
-
-    if (originalAA && !AA_TO_CODONS[originalAA]) {
-      showError("元のアミノ酸を1文字表記で入力してください。");
-      return;
-    }
-
-    if (!AA_TO_CODONS[mutantAA]) {
-      showError("変異後のアミノ酸を1文字表記で入力してください。");
-      return;
-    }
-
-
-    /* ---------- 元コドン確認 ---------- */
-
-    const codonStart =
-      getCodonStart(position);
-
-    if (codonStart + 3 > sequence.length) {
-      showError("指定された残基番号は配列範囲外です。");
-      return;
-    }
-
-    const originalCodon =
-      sequence.slice(codonStart, codonStart + 3);
-
-    const detectedAA =
-      CODON_TABLE[originalCodon];
-
-    if (originalAA && originalAA !== detectedAA) {
-      showError(
-        position +
-        "番目の残基は " +
-        originalAA +
-        " ではありません。<br>" +
-        "入力された配列では <strong>" +
-        detectedAA +
-        "</strong> です。<br>" +
-        "コドン：" +
-        originalCodon
-      );
-
-      return;
-    }
-
-
-    /* ---------- 変異後コドン候補 ----------
-       E. coli codon usageの高い順
-    */
-
-    const candidateCodons =
-      [...AA_TO_CODONS[mutantAA]]
-        .sort(function(a, b) {
-          return CODON_USAGE[b] - CODON_USAGE[a];
-        });
-
-
-    let html = "";
-    const designWarnings = new Set();
-
-    html += `
-      <div class="info">
-        <strong>変異：</strong>
-        ${detectedAA}${position}${mutantAA}
-        <br>
-
-        <strong>元のコドン：</strong>
-        ${originalCodon}
-        <br>
-
-        <strong>変異後コドン候補：</strong>
-        ${candidateCodons.join(", ")}
-      </div>
-    `;
-
-
-    html += `
-      <table>
-        <colgroup>
-          <col style="width: 5%;">
-          <col style="width: 7%;">
-          <col style="width: 7%;">
-          <col style="width: 7%;">
-          <col style="width: 27%;">
-          <col style="width: 7%;">
-          <col style="width: 27%;">
-          <col style="width: 7%;">
-        </colgroup>
-
-        <thead>
-          <tr>
-            <th>No.</th>
-            <th class="compact-header">変異<br>コドン</th>
-            <th class="compact-header">Codon<br>usage</th>
-            <th class="compact-header">塩基<br>置換数</th>
-            <th>Primer F (5'→3')</th>
-            <th>Tm (°C)</th>
-            <th>Primer R (5'→3')</th>
-            <th>Tm (°C)</th>
-          </tr>
-        </thead>
-
-        <tbody>
-    `;
-
-
-    try {
-      candidateCodons.forEach(function(mutantCodon, index) {
-
-        const primers =
-          createPrimerPair(
-            sequence,
-            codonStart,
-            mutantCodon
+    (() => {
+      "use strict";
+
+      /* ======================================================
+         1. 定数
+      ====================================================== */
+
+      const CODON_TABLE = {
+        TTT: "F", TTC: "F", TTA: "L", TTG: "L",
+        TCT: "S", TCC: "S", TCA: "S", TCG: "S",
+        TAT: "Y", TAC: "Y", TAA: "*", TAG: "*",
+        TGT: "C", TGC: "C", TGA: "*", TGG: "W",
+        CTT: "L", CTC: "L", CTA: "L", CTG: "L",
+        CCT: "P", CCC: "P", CCA: "P", CCG: "P",
+        CAT: "H", CAC: "H", CAA: "Q", CAG: "Q",
+        CGT: "R", CGC: "R", CGA: "R", CGG: "R",
+        ATT: "I", ATC: "I", ATA: "I", ATG: "M",
+        ACT: "T", ACC: "T", ACA: "T", ACG: "T",
+        AAT: "N", AAC: "N", AAA: "K", AAG: "K",
+        AGT: "S", AGC: "S", AGA: "R", AGG: "R",
+        GTT: "V", GTC: "V", GTA: "V", GTG: "V",
+        GCT: "A", GCC: "A", GCA: "A", GCG: "A",
+        GAT: "D", GAC: "D", GAA: "E", GAG: "E",
+        GGT: "G", GGC: "G", GGA: "G", GGG: "G"
+      };
+
+      const CODON_USAGE = {
+        TTT: 0.57, TTC: 0.43,
+        TTA: 0.15, TTG: 0.12, CTT: 0.12, CTC: 0.10, CTA: 0.05, CTG: 0.46,
+        TCT: 0.11, TCC: 0.11, TCA: 0.15, TCG: 0.16, AGT: 0.14, AGC: 0.33,
+        TAT: 0.53, TAC: 0.47,
+        TAA: 0.64, TAG: 0.00, TGA: 0.36,
+        TGT: 0.42, TGC: 0.58, TGG: 1.00,
+        CCT: 0.17, CCC: 0.13, CCA: 0.14, CCG: 0.55,
+        CAT: 0.55, CAC: 0.45, CAA: 0.30, CAG: 0.70,
+        CGT: 0.36, CGC: 0.44, CGA: 0.07, CGG: 0.07, AGA: 0.02, AGG: 0.03,
+        ATT: 0.58, ATC: 0.35, ATA: 0.07, ATG: 1.00,
+        ACT: 0.16, ACC: 0.47, ACA: 0.13, ACG: 0.24,
+        AAT: 0.47, AAC: 0.53, AAA: 0.73, AAG: 0.27,
+        GTT: 0.25, GTC: 0.18, GTA: 0.17, GTG: 0.40,
+        GCT: 0.11, GCC: 0.31, GCA: 0.21, GCG: 0.38,
+        GAT: 0.65, GAC: 0.35, GAA: 0.70, GAG: 0.30,
+        GGT: 0.29, GGC: 0.46, GGA: 0.13, GGG: 0.12
+      };
+
+      const NN_PARAMS = {
+        AA: { dH: -9.1, dS: -24.0 }, TT: { dH: -9.1, dS: -24.0 },
+        AT: { dH: -8.6, dS: -23.9 }, TA: { dH: -6.0, dS: -16.9 },
+        CA: { dH: -5.8, dS: -12.9 }, TG: { dH: -5.8, dS: -12.9 },
+        GT: { dH: -6.5, dS: -17.3 }, AC: { dH: -6.5, dS: -17.3 },
+        CT: { dH: -7.8, dS: -20.8 }, AG: { dH: -7.8, dS: -20.8 },
+        GA: { dH: -5.6, dS: -13.5 }, TC: { dH: -5.6, dS: -13.5 },
+        CG: { dH: -11.9, dS: -27.8 }, GC: { dH: -11.1, dS: -26.7 },
+        GG: { dH: -11.0, dS: -26.6 }, CC: { dH: -11.0, dS: -26.6 }
+      };
+
+      const PRIMER_CONC_M = 0.5e-6;
+      const NA_CONC_M = 0.05;
+
+      const AA_TO_CODONS = Object.entries(CODON_TABLE).reduce((map, [codon, aa]) => {
+        (map[aa] ??= []).push(codon);
+        return map;
+      }, {});
+
+      const COPY_ICON = `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="9" y="9" width="10" height="10" rx="2"
+            fill="none" stroke="currentColor" stroke-width="1.8"></rect>
+          <path d="M15 9V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"
+            fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round"></path>
+        </svg>`;
+
+      /* ======================================================
+         2. 共通ユーティリティ
+      ====================================================== */
+
+      const $ = (id) => document.getElementById(id);
+      const isGC = (base) => base === "G" || base === "C";
+      const isDNA = (sequence) => /^[ATGC]+$/.test(sequence);
+
+      function cleanSequence(sequence) {
+        return sequence.toUpperCase().replace(/\s/g, "");
+      }
+
+      function complement(base) {
+        return { A: "T", T: "A", G: "C", C: "G" }[base];
+      }
+
+      function reverseComplement(sequence) {
+        return [...sequence].reverse().map(complement).join("");
+      }
+
+      function getCodonStart(position) {
+        return (position - 1) * 3;
+      }
+
+      function countBaseChanges(originalCodon, mutantCodon) {
+        return [...originalCodon].reduce(
+          (count, base, index) => count + (base !== mutantCodon[index] ? 1 : 0),
+          0
+        );
+      }
+
+      function calculateGCPercent(sequence) {
+        if (!sequence.length) return 0;
+        const gcCount = [...sequence].filter(isGC).length;
+        return (gcCount / sequence.length) * 100;
+      }
+
+      function calculateTm(sequence) {
+        let deltaH = 0;
+        let deltaS = 0;
+
+        for (let i = 0; i < sequence.length - 1; i++) {
+          const pair = sequence.slice(i, i + 2);
+          const params = NN_PARAMS[pair];
+
+          if (!params) {
+            throw new Error(`Tm計算中に認識できない塩基対が見つかりました：${pair}`);
+          }
+
+          deltaH += params.dH;
+          deltaS += params.dS;
+        }
+
+        const denominator =
+          -10.8 + deltaS + 1.987 * Math.log(PRIMER_CONC_M / 4);
+
+        return (
+          (1000 * deltaH) / denominator
+          - 273.15
+          + 16.6 * Math.log10(NA_CONC_M)
+        );
+      }
+
+      function calculateTmSafe(sequence) {
+        return sequence.length < 2 ? null : calculateTm(sequence);
+      }
+
+      function errorHtml(message, style = "") {
+        return `<div class="error"${style ? ` style="${style}"` : ""}>${message}</div>`;
+      }
+
+      function copyButtonHtml(sequence) {
+        return `
+          <button
+            type="button"
+            class="copy-button"
+            aria-label="配列をコピー"
+            title="配列をコピー"
+            data-copy="${sequence}"
+          >
+            ${COPY_ICON}
+          </button>`;
+      }
+
+      async function copySequence(sequence, button) {
+        try {
+          await navigator.clipboard.writeText(sequence);
+        } catch {
+          const textarea = document.createElement("textarea");
+          textarea.value = sequence;
+          textarea.style.position = "fixed";
+          textarea.style.opacity = "0";
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand("copy");
+          textarea.remove();
+        }
+
+        button.classList.add("copied");
+        setTimeout(() => button.classList.remove("copied"), 1200);
+      }
+
+      /* ======================================================
+         3. 一変異導入用Primer
+      ====================================================== */
+
+      const mutationState = {
+        rows: new Map(),
+        variantCounts: new Map()
+      };
+
+      function extendForwardEnd(sequence, end) {
+        while (end < sequence.length && !isGC(sequence[end - 1])) {
+          end++;
+        }
+        return end;
+      }
+
+      function extendReverseStart(sequence, start) {
+        while (start > 0 && !isGC(sequence[start])) {
+          start--;
+        }
+        return start;
+      }
+
+      function findLongestForwardGCEnd(sequence, mutationEnd) {
+        let end = sequence.length;
+        while (end > mutationEnd && !isGC(sequence[end - 1])) {
+          end--;
+        }
+        return end > mutationEnd ? end : null;
+      }
+
+      function findLongestReverseGCStart(sequence, codonStart) {
+        for (let start = 0; start < codonStart; start++) {
+          if (isGC(sequence[start])) return start;
+        }
+        return null;
+      }
+
+      function createPrimerPair(originalSequence, codonStart, mutantCodon) {
+        const warnings = [];
+        const mutatedSequence =
+          originalSequence.slice(0, codonStart) +
+          mutantCodon +
+          originalSequence.slice(codonStart + 3);
+
+        const mutationEnd = codonStart + 3;
+
+        // Forward: 6 bases upstream + mutation + 18 bases downstream
+        const desiredForwardStart = codonStart - 6;
+        const desiredForwardEnd = mutationEnd + 18;
+        const forwardStart = Math.max(0, desiredForwardStart);
+        let forwardEnd = Math.min(mutatedSequence.length, desiredForwardEnd);
+
+        if (desiredForwardStart < 0) {
+          warnings.push(
+            "Primer F：変異コドンの5'側6塩基を確保できないため、配列の5'末端から作成しています。"
           );
+        }
 
-        primers.warnings.forEach(function(warning) {
-          designWarnings.add(warning);
-        });
+        if (desiredForwardEnd > mutatedSequence.length) {
+          const gcEnd = findLongestForwardGCEnd(mutatedSequence, mutationEnd);
+          forwardEnd = gcEnd ?? mutatedSequence.length;
 
-        const usage =
-          CODON_USAGE[mutantCodon];
-
-        const usagePercent =
-          Math.round(usage * 100);
-
-        const baseChanges =
-          countBaseChanges(
-            originalCodon,
-            mutantCodon
+          warnings.push(
+            gcEnd
+              ? "Primer F：変異コドンの3'側18塩基を確保できないため、取得可能な範囲で最も長く、3'末端がG/Cになる位置までで作成しています。"
+              : "Primer F：変異コドンの3'側18塩基を確保できず、利用可能な3'側領域にG/C終端位置もないため、配列末端までで作成しています。"
           );
+        } else {
+          forwardEnd = extendForwardEnd(mutatedSequence, forwardEnd);
+        }
 
-        const tmF =
-          calculateTmSafe(primers.primerF.slice(primers.mutationStartF + 3));
+        const primerF = mutatedSequence.slice(forwardStart, forwardEnd);
+        const mutationStartF = codonStart - forwardStart;
 
-        const tmR =
-          calculateTmSafe(primers.primerR.slice(primers.mutationStartR + 3));
+        // Reverse: 18 bases upstream + mutation + 6 bases downstream, then RC
+        const desiredReverseStart = codonStart - 18;
+        const desiredReverseEnd = mutationEnd + 6;
+        let reverseStart = Math.max(0, desiredReverseStart);
+        const reverseEnd = Math.min(mutatedSequence.length, desiredReverseEnd);
 
-        const rootNo =
-          index + 1;
+        if (desiredReverseStart < 0) {
+          const gcStart = findLongestReverseGCStart(mutatedSequence, codonStart);
+          reverseStart = gcStart ?? 0;
 
-        const rowId =
-          `primer-row-${rootNo}`;
+          warnings.push(
+            gcStart !== null
+              ? "Primer R：変異コドンの18塩基側を確保できないため、取得可能な範囲で最も長く、Primerの3'末端がG/Cになる位置までで作成しています。"
+              : "Primer R：変異コドンの18塩基側を確保できず、利用可能な領域にG/C終端位置もないため、配列の5'末端までで作成しています。"
+          );
+        } else {
+          reverseStart = extendReverseStart(mutatedSequence, reverseStart);
+        }
 
-        primerVariantCounters[rootNo] = 1;
+        if (desiredReverseEnd > mutatedSequence.length) {
+          warnings.push(
+            "Primer R：変異コドンの3'側6塩基を確保できないため、配列の3'末端までで作成しています。"
+          );
+        }
 
-        primerRowData[rowId] = {
-          rowId: rowId,
-          rootNo: rootNo,
-          displayNo: String(rootNo),
+        const reverseTemplate = mutatedSequence.slice(reverseStart, reverseEnd);
+        const primerR = reverseComplement(reverseTemplate);
+        const mutationOffsetInTemplate = codonStart - reverseStart;
+        const mutationStartR =
+          reverseTemplate.length - (mutationOffsetInTemplate + 3);
 
-          mutantCodon: mutantCodon,
-          usagePercent: usagePercent,
-          baseChanges: baseChanges,
+        return {
+          primerF,
+          primerR,
+          mutatedSequence,
+          forwardStart,
+          forwardEnd,
+          reverseStart,
+          reverseEnd,
+          mutationStartF,
+          mutationStartR,
+          warnings
+        };
+      }
 
-          primerF: primers.primerF,
-          primerR: primers.primerR,
+      function highlightMutation(primer, mutationStart) {
+        const mutationEnd = mutationStart + 3;
+        if (mutationStart < 0 || mutationEnd > primer.length) return primer;
 
-          mutatedSequence: primers.mutatedSequence,
+        return (
+          primer.slice(0, mutationStart) +
+          `<span class="mutation-codon">${primer.slice(mutationStart, mutationEnd)}</span>` +
+          primer.slice(mutationEnd)
+        );
+      }
 
-          forwardStart: primers.forwardStart,
-          forwardEnd: primers.forwardEnd,
+      function primerTm(primer, mutationStart) {
+        return calculateTmSafe(primer.slice(mutationStart + 3));
+      }
 
-          reverseStart: primers.reverseStart,
-          reverseEnd: primers.reverseEnd,
+      function primerCellHtml(primer, mutationStart, rowId, direction) {
+        return `
+          <div class="primer-cell-content">
+            <div class="primer-sequence-text">
+              ${highlightMutation(primer, mutationStart)}
+            </div>
 
-          mutationStartF: primers.mutationStartF,
-          mutationStartR: primers.mutationStartR,
+            <div class="primer-action-row">
+              <button
+                type="button"
+                class="extend-button"
+                data-action="extend-primer"
+                data-row-id="${rowId}"
+                data-direction="${direction}"
+              >
+                次のG/Cまで延長する
+              </button>
+              ${copyButtonHtml(primer)}
+            </div>
+          </div>`;
+      }
 
-          warnings: primers.warnings
+      function mutationRowHtml(data, extended = false) {
+        const tmF = primerTm(data.primerF, data.mutationStartF);
+        const tmR = primerTm(data.primerR, data.mutationStartR);
+
+        return `
+          <tr
+            ${extended ? 'class="extended-row"' : ""}
+            id="${data.rowId}"
+            data-root-no="${data.rootNo}"
+          >
+            <td>${data.displayNo}</td>
+            <td class="sequence">${data.mutantCodon}</td>
+            <td>${data.usagePercent}%</td>
+            <td>${data.baseChanges}</td>
+            <td class="sequence primer-sequence-cell">
+              ${primerCellHtml(data.primerF, data.mutationStartF, data.rowId, "F")}
+            </td>
+            <td class="tm-value">${tmF === null ? "N/A" : tmF.toFixed(1)}</td>
+            <td class="sequence primer-sequence-cell">
+              ${primerCellHtml(data.primerR, data.mutationStartR, data.rowId, "R")}
+            </td>
+            <td class="tm-value">${tmR === null ? "N/A" : tmR.toFixed(1)}</td>
+          </tr>`;
+      }
+
+      function extendMutationPrimer(source, direction) {
+        if (direction === "F") {
+          let position = source.forwardEnd;
+          while (
+            position < source.mutatedSequence.length &&
+            !isGC(source.mutatedSequence[position])
+          ) {
+            position++;
+          }
+
+          if (position >= source.mutatedSequence.length) return null;
+
+          const forwardEnd = position + 1;
+          return {
+            ...source,
+            primerF: source.mutatedSequence.slice(source.forwardStart, forwardEnd),
+            forwardEnd
+          };
+        }
+
+        let position = source.reverseStart - 1;
+        while (position >= 0 && !isGC(source.mutatedSequence[position])) {
+          position--;
+        }
+
+        if (position < 0) return null;
+
+        const reverseStart = position;
+        const reverseTemplate = source.mutatedSequence.slice(
+          reverseStart,
+          source.reverseEnd
+        );
+
+        return {
+          ...source,
+          primerR: reverseComplement(reverseTemplate),
+          reverseStart
+        };
+      }
+
+      function handlePrimerExtension(button) {
+        const source = mutationState.rows.get(button.dataset.rowId);
+        if (!source) return;
+
+        const extended = extendMutationPrimer(source, button.dataset.direction);
+        if (!extended) {
+          button.disabled = true;
+          button.textContent = "これ以上G/Cなし";
+          return;
+        }
+
+        button.disabled = true;
+        button.textContent = "延長済み";
+
+        const rootNo = source.rootNo;
+        const variantNo = (mutationState.variantCounts.get(rootNo) ?? 1) + 1;
+        mutationState.variantCounts.set(rootNo, variantNo);
+
+        const rowId = `primer-row-${rootNo}-${variantNo}`;
+        const newData = {
+          ...extended,
+          rowId,
+          displayNo: `${rootNo}-${variantNo}`
+        };
+        mutationState.rows.set(rowId, newData);
+
+        const groupRows = document.querySelectorAll(`tr[data-root-no="${rootNo}"]`);
+        groupRows[groupRows.length - 1].insertAdjacentHTML(
+          "afterend",
+          mutationRowHtml(newData, true)
+        );
+      }
+
+      function updateOriginalAA() {
+        const sequence = cleanSequence($("sequence").value);
+        const position = Number($("position").value);
+
+        if (!sequence || !Number.isInteger(position) || position < 1) {
+          $("originalAA").value = "";
+          return;
+        }
+
+        const codonStart = getCodonStart(position);
+        const codon = sequence.slice(codonStart, codonStart + 3);
+        $("originalAA").value = /^[ATGC]{3}$/.test(codon)
+          ? (CODON_TABLE[codon] ?? "")
+          : "";
+      }
+
+      function handleMutationDesign() {
+        const result = $("result");
+        const sequence = cleanSequence($("sequence").value);
+        const position = Number($("position").value);
+        const originalAA = $("originalAA").value.trim().toUpperCase();
+        const mutantAA = $("mutantAA").value.trim().toUpperCase();
+
+        result.innerHTML = "";
+        mutationState.rows.clear();
+        mutationState.variantCounts.clear();
+
+        const fail = (message) => {
+          result.innerHTML = errorHtml(message);
         };
 
-        html += `
-          <tr
-            id="${rowId}"
-            data-root-no="${rootNo}"
-          >
-            <td>${rootNo}</td>
+        if (!sequence) return fail("塩基配列を入力してください。");
+        if (!isDNA(sequence)) return fail("塩基配列にはA、T、G、Cのみ使用してください。");
+        if (sequence.length % 3 !== 0) return fail("塩基配列の長さが3の倍数ではありません。");
+        if (!Number.isInteger(position) || position < 1) return fail("残基番号を正しく入力してください。");
+        if (originalAA && !AA_TO_CODONS[originalAA]) return fail("元のアミノ酸を1文字表記で入力してください。");
+        if (!AA_TO_CODONS[mutantAA]) return fail("変異後のアミノ酸を1文字表記で入力してください。");
 
-            <td class="sequence">
-              ${mutantCodon}
-            </td>
+        const codonStart = getCodonStart(position);
+        if (codonStart + 3 > sequence.length) {
+          return fail("指定された残基番号は配列範囲外です。");
+        }
 
-            <td>
-              ${usagePercent}%
-            </td>
+        const originalCodon = sequence.slice(codonStart, codonStart + 3);
+        const detectedAA = CODON_TABLE[originalCodon];
 
-            <td>
-              ${baseChanges}
-            </td>
+        if (originalAA && originalAA !== detectedAA) {
+          return fail(
+            `${position}番目の残基は ${originalAA} ではありません。<br>` +
+            `入力された配列では <strong>${detectedAA}</strong> です。<br>` +
+            `コドン：${originalCodon}`
+          );
+        }
 
-            <td class="sequence primer-sequence-cell">
-              ${makePrimerCell(
-                primers.primerF,
-                primers.mutationStartF,
-                rowId,
-                "F"
-              )}
-            </td>
+        const candidateCodons = [...AA_TO_CODONS[mutantAA]].sort(
+          (a, b) => CODON_USAGE[b] - CODON_USAGE[a]
+        );
+        const warnings = new Set();
+        const rows = [];
 
-            <td class="tm-value">
-              ${tmF === null ? "N/A" : tmF.toFixed(1)}
-            </td>
+        candidateCodons.forEach((mutantCodon, index) => {
+          const pair = createPrimerPair(sequence, codonStart, mutantCodon);
+          pair.warnings.forEach((warning) => warnings.add(warning));
 
-            <td class="sequence primer-sequence-cell">
-              ${makePrimerCell(
-                primers.primerR,
-                primers.mutationStartR,
-                rowId,
-                "R"
-              )}
-            </td>
+          const rootNo = index + 1;
+          const rowId = `primer-row-${rootNo}`;
+          const rowData = {
+            ...pair,
+            rowId,
+            rootNo,
+            displayNo: String(rootNo),
+            mutantCodon,
+            usagePercent: Math.round(CODON_USAGE[mutantCodon] * 100),
+            baseChanges: countBaseChanges(originalCodon, mutantCodon)
+          };
 
-            <td class="tm-value">
-              ${tmR === null ? "N/A" : tmR.toFixed(1)}
-            </td>
-          </tr>
-        `;
-      });
+          mutationState.rows.set(rowId, rowData);
+          mutationState.variantCounts.set(rootNo, 1);
+          rows.push(mutationRowHtml(rowData));
+        });
 
-    } catch (error) {
-      showError(error.message);
-      return;
-    }
+        const warningHtml = warnings.size
+          ? `
+            <div class="warning">
+              <strong>⚠ Primer長が不足しています</strong><br>
+              ${[...warnings].join("<br>")}<br>
+              可能な範囲でPrimer候補を表示しています。
+            </div>`
+          : "";
 
-
-    html += `
-        </tbody>
-      </table>
-    `;
-
-    if (designWarnings.size > 0) {
-
-      const warningHtml = `
-        <div class="warning">
-          <strong>⚠ Primer長が不足しています</strong><br>
-          ${Array.from(designWarnings).join("<br>")}
-          <br>
-          可能な範囲でPrimer候補を表示しています。
-        </div>
-      `;
-
-      html =
-        warningHtml +
-        html;
-    }
-
-    result.innerHTML = html;
-  });
-
-
-/* =========================================================
-   独立Tm計算
-   入力された配列全体を最近接塩基対法で計算
-========================================================= */
-
-document
-  .getElementById("tmCalculateButton")
-  .addEventListener("click", function () {
-
-    const tmResult =
-      document.getElementById("tmResult");
-
-    const tmSequence =
-      cleanSequence(
-        document.getElementById("tmSequence").value
-      );
-
-    tmResult.innerHTML = "";
-
-    if (tmSequence.length === 0) {
-      tmResult.innerHTML = `
-        <div class="error">
-          Tmを計算する塩基配列を入力してください。
-        </div>
-      `;
-      return;
-    }
-
-    if (!/^[ATGC]+$/.test(tmSequence)) {
-      tmResult.innerHTML = `
-        <div class="error">
-          塩基配列にはA、T、G、Cのみ使用してください。
-        </div>
-      `;
-      return;
-    }
-
-    if (tmSequence.length < 2) {
-      tmResult.innerHTML = `
-        <div class="error">
-          最近接塩基対法で計算するため、2塩基以上の配列を入力してください。
-        </div>
-      `;
-      return;
-    }
-
-    try {
-
-      const tm =
-        calculateTm(tmSequence);
-
-      const gcPercent =
-        calculateGCPercent(tmSequence);
-
-      tmResult.innerHTML = `
-        <div class="tm-result-box">
-          <strong>Tm</strong>
-          <div class="tm-result-number">
-            ${tm.toFixed(1)} °C
+        result.innerHTML = `
+          ${warningHtml}
+          <div class="info">
+            <strong>変異：</strong>${detectedAA}${position}${mutantAA}<br>
+            <strong>元のコドン：</strong>${originalCodon}<br>
+            <strong>変異後コドン候補：</strong>${candidateCodons.join(", ")}
           </div>
 
-          <div class="tm-result-meta">
-            GC率：<strong>${gcPercent.toFixed(1)}%</strong> ／
-            配列長：${tmSequence.length} nt ／
-            Primer濃度：0.5 µM ／
-            Na<sup>+</sup>：50 mM
-          </div>
-        </div>
-      `;
-
-    } catch (error) {
-
-      tmResult.innerHTML = `
-        <div class="error">
-          ${error.message}
-        </div>
-      `;
-
-    }
-
-  });
-
-
-
-/* =========================================================
-   逆向き相補鎖（reverse complement）変換
-   5'→3'入力をreverse complementし、5'→3'で表示
-========================================================= */
-
-function makeComplement(sequence) {
-
-  return reverseComplement(sequence);
-}
-
-
-document
-  .getElementById("complementButton")
-  .addEventListener("click", function () {
-
-    const complementResult =
-      document.getElementById("complementResult");
-
-    const inputSequence =
-      cleanSequence(
-        document.getElementById("complementSequence").value
-      );
-
-    complementResult.innerHTML = "";
-
-    if (inputSequence.length === 0) {
-      complementResult.innerHTML = `
-        <div class="error">
-          逆向き相補鎖に変換する塩基配列を入力してください。
-        </div>
-      `;
-      return;
-    }
-
-    if (!/^[ATGC]+$/.test(inputSequence)) {
-      complementResult.innerHTML = `
-        <div class="error">
-          塩基配列にはA、T、G、Cのみ使用してください。
-        </div>
-      `;
-      return;
-    }
-
-    const converted =
-      makeComplement(inputSequence);
-
-    complementResult.innerHTML = `
-      <div class="complement-result-box">
-
-        <div class="complement-label">
-          入力（5'→3'）
-        </div>
-
-        <div class="complement-sequence-output">
-          5' - ${inputSequence} - 3'
-        </div>
-
-        <div class="complement-label" style="margin-top: 14px;">
-          逆向き相補鎖（5'→3'）
-        </div>
-
-        <div class="complement-output-inline">
-          <div class="complement-sequence-output">
-            5' - ${converted} - 3'
-          </div>
-
-          <button
-            type="button"
-            class="copy-button"
-            aria-label="配列をコピー"
-            title="配列をコピー"
-            onclick="copySequenceToClipboard('${converted}', this)"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <rect x="9" y="9" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"></rect>
-              <path d="M15 9V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
-            </svg>
-          </button>
-        </div>
-
-      </div>
-    `;
-
-  });
-
-
-
-/* =========================================================
-   自動プライマー設計
-   1塩基目から始まる、G/C終端のprefixを候補にする
-========================================================= */
-let autoPrimerCandidates = [];
-let autoPrimerCurrentIndex = -1;
-let autoPrimerMessage = "";
-let autoPrimerMessageType = "";
-let autoPrimerDirection = "F";
-
-function buildAutoPrimerCandidates(sequence, startPosition, direction, originMode, enteredPosition) {
-
-  const candidates = [];
-
-  /*
-    startPosition は、入力した元配列上の1始まりの塩基番号。
-    FとRで同じ番号を基準として使用する。
-  */
-
-  if (direction === "F") {
-
-    /*
-      Forward primer：
-      指定した塩基を5'端として固定し、
-      入力配列の右方向へ伸ばす。
-    */
-    const startIndex =
-      startPosition - 1;
-
-    for (
-      let end = startIndex + 2;
-      end <= sequence.length;
-      end++
-    ) {
-
-      const lastBase =
-        sequence[end - 1];
-
-      if (
-        lastBase !== "G" &&
-        lastBase !== "C"
-      ) {
-        continue;
+          <table>
+            <colgroup>
+              <col style="width: 5%;">
+              <col style="width: 7%;">
+              <col style="width: 7%;">
+              <col style="width: 7%;">
+              <col style="width: 27%;">
+              <col style="width: 7%;">
+              <col style="width: 27%;">
+              <col style="width: 7%;">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th class="compact-header">変異<br>コドン</th>
+                <th class="compact-header">Codon<br>usage</th>
+                <th class="compact-header">塩基<br>置換数</th>
+                <th>Primer F (5'→3')</th>
+                <th>Tm (°C)</th>
+                <th>Primer R (5'→3')</th>
+                <th>Tm (°C)</th>
+              </tr>
+            </thead>
+            <tbody>${rows.join("")}</tbody>
+          </table>`;
       }
 
-      const primer =
-        sequence.slice(
-          startIndex,
-          end
+      /* ======================================================
+         4. 自動Primer設計
+      ====================================================== */
+
+      const autoState = {
+        candidates: [],
+        currentIndex: -1,
+        message: "",
+        messageType: ""
+      };
+
+      function resolveStartPosition(sequenceLength, enteredPosition, originMode) {
+        return originMode === "back"
+          ? sequenceLength - enteredPosition + 1
+          : enteredPosition;
+      }
+
+      function buildAutoPrimerCandidates({
+        sequence,
+        startPosition,
+        direction,
+        originMode,
+        enteredPosition
+      }) {
+        const candidates = [];
+
+        if (direction === "F") {
+          const startIndex = startPosition - 1;
+
+          for (let end = startIndex + 2; end <= sequence.length; end++) {
+            if (!isGC(sequence[end - 1])) continue;
+
+            const primer = sequence.slice(startIndex, end);
+            const tm = calculateTmSafe(primer);
+            if (tm === null) continue;
+
+            candidates.push({
+              sequence: primer,
+              direction: "F",
+              originMode,
+              enteredPosition,
+              startPosition,
+              rangeStart: startPosition,
+              rangeEnd: end,
+              length: primer.length,
+              tm,
+              gc: calculateGCPercent(primer)
+            });
+          }
+        } else {
+          const rightEnd = startPosition;
+
+          for (let leftIndex = rightEnd - 2; leftIndex >= 0; leftIndex--) {
+            if (!isGC(sequence[leftIndex])) continue;
+
+            const primer = reverseComplement(sequence.slice(leftIndex, rightEnd));
+            const tm = calculateTmSafe(primer);
+            if (tm === null) continue;
+
+            candidates.push({
+              sequence: primer,
+              direction: "R",
+              originMode,
+              enteredPosition,
+              startPosition,
+              rangeStart: leftIndex + 1,
+              rangeEnd: startPosition,
+              length: primer.length,
+              tm,
+              gc: calculateGCPercent(primer)
+            });
+          }
+        }
+
+        return candidates;
+      }
+
+      function selectInitialAutoPrimer(candidates) {
+        const inRange = candidates
+          .map((candidate, index) => ({ candidate, index }))
+          .filter(({ candidate }) => candidate.tm >= 55 && candidate.tm <= 60);
+
+        if (inRange.length) {
+          inRange.sort((a, b) => {
+            const tmDifference =
+              Math.abs(a.candidate.tm - 57.5) - Math.abs(b.candidate.tm - 57.5);
+            return tmDifference || a.candidate.length - b.candidate.length;
+          });
+
+          return { index: inRange[0].index, message: "", type: "" };
+        }
+
+        const maxTm = Math.max(...candidates.map(({ tm }) => tm));
+
+        if (maxTm < 55) {
+          return {
+            index: candidates.length - 1,
+            message:
+              "入力配列が短く、Tm 55℃以上のPrimerを作成できません。G/C終端で取得できる最長の配列を表示しています。",
+            type: "error"
+          };
+        }
+
+        let bestIndex = 0;
+        candidates.forEach((candidate, index) => {
+          if (
+            Math.abs(candidate.tm - 57.5) <
+            Math.abs(candidates[bestIndex].tm - 57.5)
+          ) {
+            bestIndex = index;
+          }
+        });
+
+        return {
+          index: bestIndex,
+          message:
+            "Tm 55〜60℃に入るG/C終端の候補がありません。57.5℃に最も近い候補を表示しています。",
+          type: "warning"
+        };
+      }
+
+      function renderAutoPrimer() {
+        const result = $("autoPrimerResult");
+        const candidate = autoState.candidates[autoState.currentIndex];
+
+        if (!candidate) {
+          result.innerHTML = "";
+          return;
+        }
+
+        const messageHtml = autoState.message
+          ? `<div class="${autoState.messageType === "error" ? "error" : "warning"}">${autoState.message}</div>`
+          : "";
+
+        result.innerHTML = `
+          ${messageHtml}
+          <div class="auto-primer-result-box">
+            <strong>Primer ${candidate.direction} (5'→3')</strong>
+
+            <div class="auto-primer-sequence">
+              ${candidate.sequence}
+              ${copyButtonHtml(candidate.sequence)}
+            </div>
+
+            <div class="auto-primer-stats">
+              <span>方向：${candidate.direction}</span>
+              <span>
+                起点：${candidate.originMode === "back" ? "後ろから" : "前から"}
+                ${candidate.enteredPosition} 塩基目
+              </span>
+              <span>元配列上：${candidate.startPosition} 塩基目</span>
+              <span>範囲：${candidate.rangeStart}–${candidate.rangeEnd} 塩基目</span>
+              <span>Length：${candidate.length} nt</span>
+              <span>Tm：${candidate.tm.toFixed(1)} ℃</span>
+              <span>GC率：${candidate.gc.toFixed(1)}%</span>
+              <span>3'末端：${candidate.sequence.slice(-1)}</span>
+            </div>
+
+            <div class="auto-primer-controls">
+              <button
+                type="button"
+                class="secondary-button"
+                data-action="auto-step"
+                data-step="-1"
+                ${autoState.currentIndex === 0 ? "disabled" : ""}
+              >
+                前のG/Cまで削る
+              </button>
+
+              <button
+                type="button"
+                class="secondary-button"
+                data-action="auto-step"
+                data-step="1"
+                ${autoState.currentIndex === autoState.candidates.length - 1 ? "disabled" : ""}
+              >
+                次のG/Cまで延長する
+              </button>
+            </div>
+          </div>`;
+      }
+
+      function stepAutoPrimer(step) {
+        const nextIndex = autoState.currentIndex + step;
+        if (nextIndex < 0 || nextIndex >= autoState.candidates.length) return;
+
+        autoState.currentIndex = nextIndex;
+        autoState.message = "";
+        autoState.messageType = "";
+        renderAutoPrimer();
+      }
+
+      function handleAutoPrimerDesign() {
+        const result = $("autoPrimerResult");
+        const sequence = cleanSequence($("autoPrimerSequence").value);
+        const enteredPosition = Number($("autoPrimerStart").value);
+        const originMode =
+          document.querySelector('input[name="autoPrimerOrigin"]:checked')?.value ??
+          "front";
+        const direction =
+          document.querySelector('input[name="autoPrimerDirection"]:checked')?.value ??
+          "F";
+
+        Object.assign(autoState, {
+          candidates: [],
+          currentIndex: -1,
+          message: "",
+          messageType: ""
+        });
+        result.innerHTML = "";
+
+        if (!sequence) {
+          result.innerHTML = errorHtml("自動設計する塩基配列を入力してください。");
+          return;
+        }
+        if (!isDNA(sequence)) {
+          result.innerHTML = errorHtml("塩基配列にはA、T、G、Cのみ使用してください。");
+          return;
+        }
+        if (!Number.isInteger(enteredPosition) || enteredPosition < 1) {
+          result.innerHTML = errorHtml("開始位置は1以上の整数で入力してください。");
+          return;
+        }
+        if (enteredPosition > sequence.length) {
+          result.innerHTML = errorHtml("指定した開始位置が入力配列の長さを超えています。");
+          return;
+        }
+
+        const startPosition = resolveStartPosition(
+          sequence.length,
+          enteredPosition,
+          originMode
         );
 
-      const tm =
-        calculateTmSafe(primer);
+        autoState.candidates = buildAutoPrimerCandidates({
+          sequence,
+          startPosition,
+          direction,
+          originMode,
+          enteredPosition
+        });
 
-      if (tm === null) {
-        continue;
+        if (!autoState.candidates.length) {
+          result.innerHTML = errorHtml(
+            "指定した起点から、3'末端をG/CにできるPrimer候補がありません。F/R方向または開始位置を確認してください。"
+          );
+          return;
+        }
+
+        const selection = selectInitialAutoPrimer(autoState.candidates);
+        autoState.currentIndex = selection.index;
+        autoState.message = selection.message;
+        autoState.messageType = selection.type;
+        renderAutoPrimer();
       }
 
-      candidates.push({
-        sequence: primer,
-        length: primer.length,
-        tm: tm,
-        gc: calculateGCPercent(primer),
-        startPosition: startPosition,
-        endPosition: end,
-        direction: "F",
-        originMode: originMode,
-        enteredPosition: enteredPosition
-      });
-    }
+      /* ======================================================
+         5. 制限酵素サイト付加
+      ====================================================== */
 
-  } else {
+      function handleRestrictionSiteAddition() {
+        const result = $("restrictionResult");
+        const sequence = cleanSequence($("restrictionSequence").value);
 
-    /*
-      Reverse primer：
-      指定した塩基を5'側の起点として固定し、
-      元配列上では左方向へ範囲を広げる。
+        if (!sequence) {
+          result.innerHTML = errorHtml(
+            "制限酵素サイトを付加する塩基配列を入力してください。",
+            "margin-top: 14px;"
+          );
+          return;
+        }
+        if (!isDNA(sequence)) {
+          result.innerHTML = errorHtml(
+            "塩基配列にはA、T、G、Cのみ使用してください。",
+            "margin-top: 14px;"
+          );
+          return;
+        }
 
-      その範囲を reverse complement して
-      Primer配列を5'→3'で出力する。
-    */
-    const rightEnd =
-      startPosition;  // sliceのend（指定塩基を含む）
+        const select = $("restrictionEnzyme");
+        const option = select.options[select.selectedIndex];
+        const site = select.value;
+        const enzymeName = option.dataset.name;
+        const combinedSequence = site + sequence;
 
-    for (
-      let leftIndex = rightEnd - 2;
-      leftIndex >= 0;
-      leftIndex--
-    ) {
+        result.innerHTML = `
+          <div class="restriction-result-box">
+            <strong>${enzymeName} siteを5'末端に付加</strong>
 
-      /*
-        reverse complement後の3'末端は
-        元配列のleftIndex塩基の相補塩基になる。
-        したがって元塩基がG/CならPrimerの3'末端もG/C。
-      */
-      const originalLeftBase =
-        sequence[leftIndex];
+            <div class="restriction-output-row">
+              <div class="restriction-output-sequence">
+                5' - <span class="restriction-site-highlight">${site}</span>${sequence} - 3'
+              </div>
+              ${copyButtonHtml(combinedSequence)}
+            </div>
 
-      if (
-        originalLeftBase !== "G" &&
-        originalLeftBase !== "C"
-      ) {
-        continue;
+            <div class="restriction-meta">
+              認識配列：${site} ／
+              元配列：${sequence.length} nt ／
+              付加後Length：${combinedSequence.length} nt
+            </div>
+          </div>`;
       }
 
-      const templateRegion =
-        sequence.slice(
-          leftIndex,
-          rightEnd
-        );
+      /* ======================================================
+         6. Tm計算
+      ====================================================== */
 
-      const primer =
-        reverseComplement(
-          templateRegion
-        );
+      function handleTmCalculation() {
+        const result = $("tmResult");
+        const sequence = cleanSequence($("tmSequence").value);
 
-      const tm =
-        calculateTmSafe(primer);
+        if (!sequence) {
+          result.innerHTML = errorHtml("Tmを計算する塩基配列を入力してください。");
+          return;
+        }
+        if (!isDNA(sequence)) {
+          result.innerHTML = errorHtml("塩基配列にはA、T、G、Cのみ使用してください。");
+          return;
+        }
+        if (sequence.length < 2) {
+          result.innerHTML = errorHtml(
+            "最近接塩基対法で計算するため、2塩基以上の配列を入力してください。"
+          );
+          return;
+        }
 
-      if (tm === null) {
-        continue;
+        try {
+          const tm = calculateTm(sequence);
+          const gcPercent = calculateGCPercent(sequence);
+
+          result.innerHTML = `
+            <div class="tm-result-box">
+              <strong>Tm</strong>
+              <div class="tm-result-number">${tm.toFixed(1)} °C</div>
+              <div class="tm-result-meta">
+                GC率：<strong>${gcPercent.toFixed(1)}%</strong> ／
+                配列長：${sequence.length} nt ／
+                Primer濃度：0.5 µM ／
+                Na<sup>+</sup>：50 mM
+              </div>
+            </div>`;
+        } catch (error) {
+          result.innerHTML = errorHtml(error.message);
+        }
       }
 
-      candidates.push({
-        sequence: primer,
-        length: primer.length,
-        tm: tm,
-        gc: calculateGCPercent(primer),
-        startPosition: startPosition,
-        endPosition: leftIndex + 1,
-        direction: "R",
-        originMode: originMode,
-        enteredPosition: enteredPosition
-      });
-    }
-  }
-
-  return candidates;
-}
-
-function chooseInitialAutoPrimerIndex(candidates) {
-  if (candidates.length === 0) return -1;
-
-  const inRange = candidates
-    .map((candidate, index) => ({ candidate, index }))
-    .filter(item => item.candidate.tm >= 55 && item.candidate.tm <= 60);
-
-  if (inRange.length > 0) {
-    inRange.sort((a, b) => {
-      const da = Math.abs(a.candidate.tm - 57.5);
-      const db = Math.abs(b.candidate.tm - 57.5);
-      if (da !== db) return da - db;
-      return a.candidate.length - b.candidate.length;
-    });
-
-    autoPrimerMessage = "";
-    autoPrimerMessageType = "";
-    return inRange[0].index;
-  }
-
-  const maxTm = Math.max(...candidates.map(candidate => candidate.tm));
-
-  if (maxTm < 55) {
-    autoPrimerMessage =
-      "入力配列が短く、Tm 55℃以上のPrimerを作成できません。G/C終端で取得できる最長の配列を表示しています。";
-    autoPrimerMessageType = "error";
-    return candidates.length - 1;
-  }
-
-  let bestIndex = 0;
-  let bestDiff = Infinity;
-
-  candidates.forEach((candidate, index) => {
-    const diff = Math.abs(candidate.tm - 57.5);
-    if (diff < bestDiff) {
-      bestDiff = diff;
-      bestIndex = index;
-    }
-  });
-
-  autoPrimerMessage =
-    "Tm 55〜60℃に入るG/C終端の候補がありません。57.5℃に最も近い候補を表示しています。";
-  autoPrimerMessageType = "warning";
-  return bestIndex;
-}
-
-function renderAutoPrimer() {
-  const result = document.getElementById("autoPrimerResult");
-
-  if (
-    autoPrimerCurrentIndex < 0 ||
-    autoPrimerCurrentIndex >= autoPrimerCandidates.length
-  ) {
-    result.innerHTML = "";
-    return;
-  }
-
-  const candidate = autoPrimerCandidates[autoPrimerCurrentIndex];
-
-  let messageHtml = "";
-  if (autoPrimerMessage) {
-    const cls = autoPrimerMessageType === "error" ? "error" : "warning";
-    messageHtml = `<div class="${cls}">${autoPrimerMessage}</div>`;
-  }
-
-  result.innerHTML = `
-    ${messageHtml}
-    <div class="auto-primer-result-box">
-      <strong>Primer ${candidate.direction} (5'→3')</strong>
-
-      <div class="auto-primer-sequence">
-        ${candidate.sequence}
-
-        <button
-          type="button"
-          class="copy-button"
-          aria-label="配列をコピー"
-          title="配列をコピー"
-          onclick="copySequenceToClipboard('${candidate.sequence}', this)"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="9" y="9" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"></rect>
-            <path d="M15 9V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
-          </svg>
-        </button>
-      </div>
-
-      <div class="auto-primer-stats">
-        <span>方向：${candidate.direction}</span>
-        <span>
-          起点：
-          ${candidate.originMode === "back" ? "後ろから" : "前から"}
-          ${candidate.enteredPosition} 塩基目
-        </span>
-        <span>
-          元配列上：
-          ${candidate.startPosition} 塩基目
-        </span>
-        <span>
-          範囲：
-          ${candidate.direction === "F"
-            ? candidate.startPosition + "–" + candidate.endPosition
-            : candidate.endPosition + "–" + candidate.startPosition}
-          塩基目
-        </span>
-        <span>Length：${candidate.length} nt</span>
-        <span>Tm：${candidate.tm.toFixed(1)} ℃</span>
-        <span>GC率：${candidate.gc.toFixed(1)}%</span>
-        <span>3'末端：${candidate.sequence.slice(-1)}</span>
-      </div>
-
-      <div class="auto-primer-controls">
-        <button
-          type="button"
-          class="secondary-button"
-          onclick="moveAutoPrimer(-1)"
-          ${autoPrimerCurrentIndex === 0 ? "disabled" : ""}
-        >
-          前のG/Cまで削る
-        </button>
-
-        <button
-          type="button"
-          class="secondary-button"
-          onclick="moveAutoPrimer(1)"
-          ${autoPrimerCurrentIndex === autoPrimerCandidates.length - 1 ? "disabled" : ""}
-        >
-          次のG/Cまで延長する
-        </button>
-      </div>
-    </div>
-  `;
-}
-
-function moveAutoPrimer(direction) {
-  const nextIndex = autoPrimerCurrentIndex + direction;
-  if (nextIndex < 0 || nextIndex >= autoPrimerCandidates.length) return;
-
-  autoPrimerCurrentIndex = nextIndex;
-  autoPrimerMessage = "";
-  autoPrimerMessageType = "";
-  renderAutoPrimer();
-}
-
-document
-  .getElementById("autoPrimerButton")
-  .addEventListener("click", function () {
-    const result = document.getElementById("autoPrimerResult");
-    const sequence = cleanSequence(
-      document.getElementById("autoPrimerSequence").value
-    );
-
-    const enteredStartPosition = Number(
-      document.getElementById("autoPrimerStart").value
-    );
-
-    const originInput =
-      document.querySelector(
-        'input[name="autoPrimerOrigin"]:checked'
-      );
-
-    const originMode =
-      originInput
-        ? originInput.value
-        : "front";
-
-    const startPosition =
-      originMode === "back"
-        ? sequence.length - enteredStartPosition + 1
-        : enteredStartPosition;
-
-    const directionInput =
-      document.querySelector(
-        'input[name="autoPrimerDirection"]:checked'
-      );
-
-    autoPrimerDirection =
-      directionInput
-        ? directionInput.value
-        : "F";
-
-    result.innerHTML = "";
-    autoPrimerCandidates = [];
-    autoPrimerCurrentIndex = -1;
-    autoPrimerMessage = "";
-    autoPrimerMessageType = "";
-
-    if (sequence.length === 0) {
-      result.innerHTML = `<div class="error">自動設計する塩基配列を入力してください。</div>`;
-      return;
-    }
-
-    if (!/^[ATGC]+$/.test(sequence)) {
-      result.innerHTML = `<div class="error">塩基配列にはA、T、G、Cのみ使用してください。</div>`;
-      return;
-    }
-
-    if (
-      !Number.isInteger(enteredStartPosition) ||
-      enteredStartPosition < 1
-    ) {
-      result.innerHTML = `
-        <div class="error">
-          開始位置は1以上の整数で入力してください。
-        </div>
-      `;
-      return;
-    }
-
-    if (enteredStartPosition > sequence.length) {
-      result.innerHTML = `
-        <div class="error">
-          指定した開始位置が入力配列の長さを超えています。
-        </div>
-      `;
-      return;
-    }
-
-    autoPrimerCandidates = buildAutoPrimerCandidates(
-      sequence,
-      startPosition,
-      autoPrimerDirection,
-      originMode,
-      enteredStartPosition
-    );
-
-    if (autoPrimerCandidates.length === 0) {
-      result.innerHTML = `
-        <div class="error">
-          指定した起点から、3'末端をG/CにできるPrimer候補がありません。F/R方向または開始位置を確認してください。
-        </div>
-      `;
-      return;
-    }
-
-    autoPrimerCurrentIndex = chooseInitialAutoPrimerIndex(autoPrimerCandidates);
-    renderAutoPrimer();
-  });
-
-
-
-
-/* =========================================================
-   塩基配列入力欄の文字数表示
-   空白・改行は数えない
-========================================================= */
-function updateCharacterCount(inputId) {
-
-  const input =
-    document.getElementById(inputId);
-
-  const counter =
-    document.querySelector(
-      `[data-count-for="${inputId}"]`
-    );
-
-  if (!input || !counter) {
-    return;
-  }
-
-  const count =
-    input.value
-      .replace(/\s/g, "")
-      .length;
-
-  counter.textContent =
-    `${count}文字`;
-}
-
-[
-  "sequence",
-  "autoPrimerSequence",
-  "restrictionSequence",
-  "tmSequence",
-  "complementSequence"
-].forEach(function(inputId) {
-
-  const input =
-    document.getElementById(inputId);
-
-  if (!input) {
-    return;
-  }
-
-  input.addEventListener(
-    "input",
-    function () {
-      updateCharacterCount(inputId);
-    }
-  );
-
-  updateCharacterCount(inputId);
-});
-
-
-
-/* =========================================================
-   制限酵素サイト付加
-========================================================= */
-document
-  .getElementById("restrictionAddButton")
-  .addEventListener("click", function () {
-
-    const result =
-      document.getElementById(
-        "restrictionResult"
-      );
-
-    const inputSequence =
-      cleanSequence(
-        document.getElementById(
-          "restrictionSequence"
-        ).value
-      );
-
-    result.innerHTML = "";
-
-
-    if (inputSequence.length === 0) {
-
-      result.innerHTML = `
-        <div class="error" style="margin-top: 14px;">
-          制限酵素サイトを付加する塩基配列を入力してください。
-        </div>
-      `;
-
-      return;
-    }
-
-
-    if (!/^[ATGC]+$/.test(inputSequence)) {
-
-      result.innerHTML = `
-        <div class="error" style="margin-top: 14px;">
-          塩基配列にはA、T、G、Cのみ使用してください。
-        </div>
-      `;
-
-      return;
-    }
-
-
-    const select =
-      document.getElementById(
-        "restrictionEnzyme"
-      );
-
-    const site =
-      select.value;
-
-    const selectedOption =
-      select.options[
-        select.selectedIndex
+      /* ======================================================
+         7. 逆向き相補鎖
+      ====================================================== */
+
+      function handleReverseComplement() {
+        const result = $("complementResult");
+        const sequence = cleanSequence($("complementSequence").value);
+
+        if (!sequence) {
+          result.innerHTML = errorHtml("逆向き相補鎖に変換する塩基配列を入力してください。");
+          return;
+        }
+        if (!isDNA(sequence)) {
+          result.innerHTML = errorHtml("塩基配列にはA、T、G、Cのみ使用してください。");
+          return;
+        }
+
+        const converted = reverseComplement(sequence);
+
+        result.innerHTML = `
+          <div class="complement-result-box">
+            <div class="complement-label">入力（5'→3'）</div>
+            <div class="complement-sequence-output">5' - ${sequence} - 3'</div>
+
+            <div class="complement-label" style="margin-top: 14px;">
+              逆向き相補鎖（5'→3'）
+            </div>
+            <div class="complement-output-inline">
+              <div class="complement-sequence-output">5' - ${converted} - 3'</div>
+              ${copyButtonHtml(converted)}
+            </div>
+          </div>`;
+      }
+
+      /* ======================================================
+         8. 入力文字数
+      ====================================================== */
+
+      const COUNTED_INPUTS = [
+        "sequence",
+        "autoPrimerSequence",
+        "restrictionSequence",
+        "tmSequence",
+        "complementSequence"
       ];
 
-    const enzymeName =
-      selectedOption.dataset.name;
+      function updateCharacterCount(inputId) {
+        const input = $(inputId);
+        const counter = document.querySelector(`[data-count-for="${inputId}"]`);
+        if (!input || !counter) return;
 
-    const combinedSequence =
-      site +
-      inputSequence;
+        counter.textContent = `${input.value.replace(/\s/g, "").length}文字`;
+      }
 
+      /* ======================================================
+         9. イベント設定
+      ====================================================== */
 
-    result.innerHTML = `
-      <div class="restriction-result-box">
+      $("designButton").addEventListener("click", handleMutationDesign);
+      $("autoPrimerButton").addEventListener("click", handleAutoPrimerDesign);
+      $("restrictionAddButton").addEventListener("click", handleRestrictionSiteAddition);
+      $("tmCalculateButton").addEventListener("click", handleTmCalculation);
+      $("complementButton").addEventListener("click", handleReverseComplement);
 
-        <strong>
-          ${enzymeName} siteを5'末端に付加
-        </strong>
+      $("position").addEventListener("input", updateOriginalAA);
+      $("sequence").addEventListener("input", updateOriginalAA);
 
-        <div class="restriction-output-row">
+      COUNTED_INPUTS.forEach((inputId) => {
+        $(inputId).addEventListener("input", () => updateCharacterCount(inputId));
+        updateCharacterCount(inputId);
+      });
 
-          <div class="restriction-output-sequence">
-            5' -
-            <span class="restriction-site-highlight">${site}</span>${inputSequence}
-            - 3'
-          </div>
+      document.addEventListener("click", (event) => {
+        const copyButton = event.target.closest("[data-copy]");
+        if (copyButton) {
+          copySequence(copyButton.dataset.copy, copyButton);
+          return;
+        }
 
-          <button
-            type="button"
-            class="copy-button"
-            aria-label="配列をコピー"
-            title="配列をコピー"
-            onclick="copySequenceToClipboard('${combinedSequence}', this)"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <rect
-                x="9"
-                y="9"
-                width="10"
-                height="10"
-                rx="2"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-              ></rect>
+        const extendButton = event.target.closest('[data-action="extend-primer"]');
+        if (extendButton) {
+          handlePrimerExtension(extendButton);
+          return;
+        }
 
-              <path
-                d="M15 9V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-              ></path>
-            </svg>
-          </button>
-
-        </div>
-
-        <div class="restriction-meta">
-          認識配列：${site} ／
-          元配列：${inputSequence.length} nt ／
-          付加後Length：${combinedSequence.length} nt
-        </div>
-
-      </div>
-    `;
-  });
-
-
-/* =========================================================
-   配列コピー
-========================================================= */
-
-async function copySequenceToClipboard(sequence, button) {
-
-  function showCopiedState() {
-    button.classList.add("copied");
-
-    setTimeout(function() {
-      button.classList.remove("copied");
-    }, 1200);
-  }
-
-  try {
-
-    await navigator.clipboard.writeText(sequence);
-    showCopiedState();
-
-  } catch (error) {
-
-    const textarea =
-      document.createElement("textarea");
-
-    textarea.value = sequence;
-    textarea.style.position = "fixed";
-    textarea.style.opacity = "0";
-
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand("copy");
-    document.body.removeChild(textarea);
-
-    showCopiedState();
-  }
-}
-
-</script>
-
-
+        const autoStepButton = event.target.closest('[data-action="auto-step"]');
+        if (autoStepButton) {
+          stepAutoPrimer(Number(autoStepButton.dataset.step));
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
