@@ -488,6 +488,89 @@
       line-height: 1.7;
     }
 
+
+    .auto-primer-section {
+      margin-top: 38px;
+      padding-top: 4px;
+    }
+
+    .auto-primer-result-box {
+      margin-top: 18px;
+      padding: 20px;
+      background: var(--primary-soft);
+      border: 1px solid #d9e0ff;
+      border-radius: var(--radius-md);
+      color: #26345f;
+    }
+
+    .auto-primer-sequence {
+      margin-top: 10px;
+      padding: 14px 16px;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.8;
+      letter-spacing: 0.03em;
+      word-break: break-all;
+      color: var(--text);
+    }
+
+    .auto-primer-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .auto-primer-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .auto-primer-controls button {
+      margin-top: 0;
+    }
+
+    @media (max-width: 760px) {
+      .auto-primer-controls {
+        grid-template-columns: 1fr;
+      }
+    }
+
+
+    .auto-primer-start-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 0 0 14px;
+      padding: 14px 16px;
+      background: var(--surface-soft);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .auto-primer-start-row input {
+      width: 90px;
+      height: 42px;
+      padding: 0 10px;
+      border-radius: var(--radius-sm);
+      background: #fff;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
   </style>
 
 </head>
@@ -500,15 +583,15 @@
   <h1>Primer Designer</h1>
 
 
-  <h2 class="section-title">一変異導入用プライマー設計</h2>
+  <h2 class="section-title">プライマー設計</h2>
 
   <!-- DNA配列 -->
-  <h2>塩基配列を入力</h2>
+  <h2>塩基配列（全長）を入力</h2>
 
   
   <textarea
     id="sequence"
-    placeholder="アミノ酸配列に対応する塩基配列（5' → 3'）を入力してください&#10;例：ATGAAAGCTGCT..."
+    placeholder="5' → 3' の塩基配列を入力してください&#10;例：ATGAAAGCTGCT..."
   ></textarea>
 
 
@@ -553,8 +636,8 @@
 
 
    <p class="sequence-note"><br>
-        Primer F：変異コドンに加えて、5'側6塩基と3'側18塩基を含めたプライマーを作成します。3'末端がA/Tの場合は、最も近いG/Cまで3'方向に延長します。<br>
-        Primer R：Primer Fと同様の操作を、相補鎖（reverse complement）に対して行います。<br>
+        Primer F：変異コドンに加えて、5'側6塩基と3'側18塩基を含めたプライマーを作成します。3'末端がA/Tの場合は、最も近いG/Cまで3'方向に延長します。18塩基側が配列末端に達して不足する場合は、取得可能な範囲で最も長く、3'末端がG/Cになる配列を使用します。<br>
+        Primer R：Primer Fと同様の操作を、相補鎖（reverse complement）に対して行います。18塩基側が不足する場合も、取得可能な範囲で最も長く、Primerの3'末端がG/Cになる配列を使用します。<br>
         Tm：最近接塩基対法で計算します（Primer濃度 0.5 µM、Na<sup>+</sup> 50 mM）。Primer F / Rともに、<strong>変異コドン自体は含めず、変異コドンより3'側の配列のみ</strong>をTm計算に使用します。
     </p>
 
@@ -566,14 +649,54 @@
   <!-- Primer設計結果 -->
   <div id="result"></div>
 
+
+  <!-- 自動プライマー設計 -->
+  <div class="auto-primer-section">
+
+    <h2 class="section-title">自動プライマー設計</h2>
+
+    <p class="sequence-note">
+      Primerの開始塩基番号を指定し、その位置から3'方向へ、3'末端がG/CでTmが55〜60℃になるPrimerを自動で選択します。
+      開始位置の初期値は1です。候補が複数ある場合は57.5℃に最も近いものを表示します。
+      配列が短く55℃に届かない場合はエラーを表示しつつ、G/C終端で取得できる最長の配列を表示します。
+    </p>
+
+    <div class="auto-primer-start-row">
+      <label for="autoPrimerStart">開始塩基番号</label>
+
+      <input
+        type="number"
+        id="autoPrimerStart"
+        min="1"
+        value="1"
+      >
+
+      <span>塩基目から開始</span>
+    </div>
+
+    <textarea
+      id="autoPrimerSequence"
+      class="tm-textarea"
+      placeholder="5' → 3' の塩基配列を入力してください&#10;例：ATGCGATCGATCGATCGATCGC"
+    ></textarea>
+
+    <button id="autoPrimerButton">
+      自動で設計
+    </button>
+
+    <div id="autoPrimerResult"></div>
+
+  </div>
+
+
   <!-- 独立Tm計算 -->
   <div class="tm-calculator-section">
 
     <h2 class="section-title">Tmを計算（最近接塩基対法）</h2>
 
     <p class="sequence-note">
-      Tmを求めたい塩基配列を5'→3'で入力してください。入力した配列全体を用いて、
-      Primer濃度 0.5 µM、Na<sup>+</sup> 50 mMとして計算します。
+      TmとGC率を求めたい塩基配列を5'→3'で入力してください。入力した配列全体を用いて、
+      Primer濃度 0.5 µM、Na<sup>+</sup> 50 mMとしてTmを計算し、GC率も同時に表示します。
     </p>
 
     <textarea
@@ -841,6 +964,21 @@ function calculateTm(sequence) {
   return tm;
 }
 
+
+
+/* =========================================================
+   GC率
+========================================================= */
+function calculateGCPercent(sequence) {
+  if (sequence.length === 0) return 0;
+
+  let gcCount = 0;
+  for (const base of sequence) {
+    if (base === "G" || base === "C") gcCount++;
+  }
+
+  return (gcCount / sequence.length) * 100;
+}
 
 function calculateTmSafe(sequence) {
 
@@ -1855,6 +1993,9 @@ document
       const tm =
         calculateTm(tmSequence);
 
+      const gcPercent =
+        calculateGCPercent(tmSequence);
+
       tmResult.innerHTML = `
         <div class="tm-result-box">
           <strong>Tm</strong>
@@ -1863,6 +2004,7 @@ document
           </div>
 
           <div class="tm-result-meta">
+            GC率：<strong>${gcPercent.toFixed(1)}%</strong> ／
             配列長：${tmSequence.length} nt ／
             Primer濃度：0.5 µM ／
             Na<sup>+</sup>：50 mM
@@ -1952,6 +2094,224 @@ document
       </div>
     `;
 
+  });
+
+
+
+/* =========================================================
+   自動プライマー設計
+   1塩基目から始まる、G/C終端のprefixを候補にする
+========================================================= */
+let autoPrimerCandidates = [];
+let autoPrimerCurrentIndex = -1;
+let autoPrimerMessage = "";
+let autoPrimerMessageType = "";
+
+function buildAutoPrimerCandidates(sequence, startPosition) {
+  const candidates = [];
+
+  // startPositionは1始まり。slice用に0始まりへ変換。
+  const startIndex = startPosition - 1;
+
+  for (let end = startIndex + 2; end <= sequence.length; end++) {
+    const lastBase = sequence[end - 1];
+    if (lastBase !== "G" && lastBase !== "C") continue;
+
+    const primer = sequence.slice(startIndex, end);
+    const tm = calculateTmSafe(primer);
+    if (tm === null) continue;
+
+    candidates.push({
+      sequence: primer,
+      length: primer.length,
+      tm: tm,
+      gc: calculateGCPercent(primer),
+      startPosition: startPosition,
+      endPosition: end
+    });
+  }
+
+  return candidates;
+}
+
+function chooseInitialAutoPrimerIndex(candidates) {
+  if (candidates.length === 0) return -1;
+
+  const inRange = candidates
+    .map((candidate, index) => ({ candidate, index }))
+    .filter(item => item.candidate.tm >= 55 && item.candidate.tm <= 60);
+
+  if (inRange.length > 0) {
+    inRange.sort((a, b) => {
+      const da = Math.abs(a.candidate.tm - 57.5);
+      const db = Math.abs(b.candidate.tm - 57.5);
+      if (da !== db) return da - db;
+      return a.candidate.length - b.candidate.length;
+    });
+
+    autoPrimerMessage = "";
+    autoPrimerMessageType = "";
+    return inRange[0].index;
+  }
+
+  const maxTm = Math.max(...candidates.map(candidate => candidate.tm));
+
+  if (maxTm < 55) {
+    autoPrimerMessage =
+      "入力配列が短く、Tm 55℃以上のPrimerを作成できません。G/C終端で取得できる最長の配列を表示しています。";
+    autoPrimerMessageType = "error";
+    return candidates.length - 1;
+  }
+
+  let bestIndex = 0;
+  let bestDiff = Infinity;
+
+  candidates.forEach((candidate, index) => {
+    const diff = Math.abs(candidate.tm - 57.5);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      bestIndex = index;
+    }
+  });
+
+  autoPrimerMessage =
+    "Tm 55〜60℃に入るG/C終端の候補がありません。57.5℃に最も近い候補を表示しています。";
+  autoPrimerMessageType = "warning";
+  return bestIndex;
+}
+
+function renderAutoPrimer() {
+  const result = document.getElementById("autoPrimerResult");
+
+  if (
+    autoPrimerCurrentIndex < 0 ||
+    autoPrimerCurrentIndex >= autoPrimerCandidates.length
+  ) {
+    result.innerHTML = "";
+    return;
+  }
+
+  const candidate = autoPrimerCandidates[autoPrimerCurrentIndex];
+
+  let messageHtml = "";
+  if (autoPrimerMessage) {
+    const cls = autoPrimerMessageType === "error" ? "error" : "warning";
+    messageHtml = `<div class="${cls}">${autoPrimerMessage}</div>`;
+  }
+
+  result.innerHTML = `
+    ${messageHtml}
+    <div class="auto-primer-result-box">
+      <strong>Primer (5'→3')</strong>
+
+      <div class="auto-primer-sequence">
+        ${candidate.sequence}
+      </div>
+
+      <div class="auto-primer-stats">
+        <span>開始：${candidate.startPosition} 塩基目</span>
+        <span>終了：${candidate.endPosition} 塩基目</span>
+        <span>Length：${candidate.length} nt</span>
+        <span>Tm：${candidate.tm.toFixed(1)} ℃</span>
+        <span>GC率：${candidate.gc.toFixed(1)}%</span>
+        <span>3'末端：${candidate.sequence.slice(-1)}</span>
+      </div>
+
+      <div class="auto-primer-controls">
+        <button
+          type="button"
+          class="secondary-button"
+          onclick="moveAutoPrimer(-1)"
+          ${autoPrimerCurrentIndex === 0 ? "disabled" : ""}
+        >
+          前のG/Cまで削る
+        </button>
+
+        <button
+          type="button"
+          class="secondary-button"
+          onclick="moveAutoPrimer(1)"
+          ${autoPrimerCurrentIndex === autoPrimerCandidates.length - 1 ? "disabled" : ""}
+        >
+          次のG/Cまで延長する
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function moveAutoPrimer(direction) {
+  const nextIndex = autoPrimerCurrentIndex + direction;
+  if (nextIndex < 0 || nextIndex >= autoPrimerCandidates.length) return;
+
+  autoPrimerCurrentIndex = nextIndex;
+  autoPrimerMessage = "";
+  autoPrimerMessageType = "";
+  renderAutoPrimer();
+}
+
+document
+  .getElementById("autoPrimerButton")
+  .addEventListener("click", function () {
+    const result = document.getElementById("autoPrimerResult");
+    const sequence = cleanSequence(
+      document.getElementById("autoPrimerSequence").value
+    );
+
+    const startPosition = Number(
+      document.getElementById("autoPrimerStart").value
+    );
+
+    result.innerHTML = "";
+    autoPrimerCandidates = [];
+    autoPrimerCurrentIndex = -1;
+    autoPrimerMessage = "";
+    autoPrimerMessageType = "";
+
+    if (sequence.length === 0) {
+      result.innerHTML = `<div class="error">自動設計する塩基配列を入力してください。</div>`;
+      return;
+    }
+
+    if (!/^[ATGC]+$/.test(sequence)) {
+      result.innerHTML = `<div class="error">塩基配列にはA、T、G、Cのみ使用してください。</div>`;
+      return;
+    }
+
+    if (!Number.isInteger(startPosition) || startPosition < 1) {
+      result.innerHTML = `
+        <div class="error">
+          開始塩基番号は1以上の整数で入力してください。
+        </div>
+      `;
+      return;
+    }
+
+    if (startPosition > sequence.length) {
+      result.innerHTML = `
+        <div class="error">
+          開始塩基番号が入力配列の長さを超えています。
+        </div>
+      `;
+      return;
+    }
+
+    autoPrimerCandidates = buildAutoPrimerCandidates(
+      sequence,
+      startPosition
+    );
+
+    if (autoPrimerCandidates.length === 0) {
+      result.innerHTML = `
+        <div class="error">
+          指定した開始位置以降に、3'末端をG/CにできるPrimer候補がありません。
+        </div>
+      `;
+      return;
+    }
+
+    autoPrimerCurrentIndex = chooseInitialAutoPrimerIndex(autoPrimerCandidates);
+    renderAutoPrimer();
   });
 
 </script>
