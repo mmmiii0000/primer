@@ -571,6 +571,132 @@
       font-weight: 800;
     }
 
+
+    .copy-button {
+      width: 30px;
+      height: 30px;
+      min-width: 30px;
+      margin: 0;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #cfd8f6;
+      border-radius: 8px;
+      color: var(--primary);
+      background: #ffffff;
+      box-shadow: none;
+      cursor: pointer;
+    }
+
+    .copy-button:hover {
+      transform: none;
+      background: var(--primary-soft);
+      box-shadow: none;
+    }
+
+    .copy-button.copied {
+      color: #137a43;
+      background: var(--success-soft);
+      border-color: #b7e4c7;
+    }
+
+    .copy-button svg {
+      width: 16px;
+      height: 16px;
+      pointer-events: none;
+    }
+
+    .copy-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 8px;
+    }
+
+    .sequence-with-copy {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .sequence-with-copy .auto-primer-sequence,
+    .sequence-with-copy .complement-sequence-output {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .sequence-with-copy .copy-button {
+      flex: 0 0 auto;
+    }
+
+
+    /* ===== 今回のレイアウト調整 ===== */
+
+    /* 一変異導入用結果表：Primer列により多くの幅を割り当てる */
+    #result {
+      overflow-x: auto;
+    }
+
+    #result table {
+      table-layout: fixed;
+      min-width: 1080px;
+    }
+
+    #result th.compact-header {
+      line-height: 1.25;
+      white-space: normal;
+    }
+
+    #result td.primer-sequence-cell {
+      min-width: 275px;
+    }
+
+    #result td.primer-sequence-cell .primer-cell-content > div:first-child {
+      white-space: nowrap;
+      word-break: normal;
+    }
+
+    /* 自動Primer：コピーアイコンを配列枠の内側右端へ */
+    .auto-primer-sequence {
+      position: relative;
+      padding-right: 54px;
+    }
+
+    .auto-primer-sequence .copy-button {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .auto-primer-sequence .copy-button:hover {
+      transform: translateY(-50%);
+    }
+
+    /* 逆向き相補鎖：3'のすぐ右にコピーアイコン */
+    .complement-output-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      max-width: 100%;
+      margin-top: 8px;
+    }
+
+    .complement-output-inline .complement-sequence-output {
+      margin-top: 0;
+    }
+
+    .complement-output-inline .copy-button {
+      flex: 0 0 auto;
+    }
+
+    @media (max-width: 760px) {
+      #result table {
+        min-width: 1080px;
+      }
+    }
+
   </style>
 
 </head>
@@ -1391,11 +1517,27 @@ function makePrimerCell(
 
   return `
     <div class="primer-cell-content">
+
       <div>
         ${highlightMutation(
           primer,
           mutationStart
         )}
+      </div>
+
+      <div class="copy-row">
+        <button
+          type="button"
+          class="copy-button"
+          aria-label="配列をコピー"
+          title="配列をコピー"
+          onclick="copySequenceToClipboard('${primer}', this)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="9" y="9" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"></rect>
+            <path d="M15 9V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+          </svg>
+        </button>
       </div>
 
       <button
@@ -1405,6 +1547,7 @@ function makePrimerCell(
       >
         次のG/Cまで延長する
       </button>
+
     </div>
   `;
 }
@@ -1526,7 +1669,7 @@ function extendPrimerRow(rowId, direction, button) {
         ${newData.baseChanges}
       </td>
 
-      <td class="sequence">
+      <td class="sequence primer-sequence-cell">
         ${makePrimerCell(
           newData.primerF,
           newData.mutationStartF,
@@ -1539,7 +1682,7 @@ function extendPrimerRow(rowId, direction, button) {
         ${tmF === null ? "N/A" : tmF.toFixed(1)}
       </td>
 
-      <td class="sequence">
+      <td class="sequence primer-sequence-cell">
         ${makePrimerCell(
           newData.primerR,
           newData.mutationStartR,
@@ -1779,12 +1922,23 @@ document
 
     html += `
       <table>
+        <colgroup>
+          <col style="width: 5%;">
+          <col style="width: 7%;">
+          <col style="width: 7%;">
+          <col style="width: 7%;">
+          <col style="width: 27%;">
+          <col style="width: 7%;">
+          <col style="width: 27%;">
+          <col style="width: 7%;">
+        </colgroup>
+
         <thead>
           <tr>
             <th>No.</th>
-            <th>変異コドン</th>
-            <th>Codon usage</th>
-            <th>塩基置換数</th>
+            <th class="compact-header">変異<br>コドン</th>
+            <th class="compact-header">Codon<br>usage</th>
+            <th class="compact-header">塩基<br>置換数</th>
             <th>Primer F (5'→3')</th>
             <th>Tm (°C)</th>
             <th>Primer R (5'→3')</th>
@@ -1881,7 +2035,7 @@ document
               ${baseChanges}
             </td>
 
-            <td class="sequence">
+            <td class="sequence primer-sequence-cell">
               ${makePrimerCell(
                 primers.primerF,
                 primers.mutationStartF,
@@ -1894,7 +2048,7 @@ document
               ${tmF === null ? "N/A" : tmF.toFixed(1)}
             </td>
 
-            <td class="sequence">
+            <td class="sequence primer-sequence-cell">
               ${makePrimerCell(
                 primers.primerR,
                 primers.mutationStartR,
@@ -2086,8 +2240,23 @@ document
           逆向き相補鎖（5'→3'）
         </div>
 
-        <div class="complement-sequence-output">
-          5' - ${converted} - 3'
+        <div class="complement-output-inline">
+          <div class="complement-sequence-output">
+            5' - ${converted} - 3'
+          </div>
+
+          <button
+            type="button"
+            class="copy-button"
+            aria-label="配列をコピー"
+            title="配列をコピー"
+            onclick="copySequenceToClipboard('${converted}', this)"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="9" y="9" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"></rect>
+              <path d="M15 9V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+            </svg>
+          </button>
         </div>
 
       </div>
@@ -2205,6 +2374,19 @@ function renderAutoPrimer() {
 
       <div class="auto-primer-sequence">
         ${candidate.sequence}
+
+        <button
+          type="button"
+          class="copy-button"
+          aria-label="配列をコピー"
+          title="配列をコピー"
+          onclick="copySequenceToClipboard('${candidate.sequence}', this)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="9" y="9" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"></rect>
+            <path d="M15 9V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+          </svg>
+        </button>
       </div>
 
       <div class="auto-primer-stats">
@@ -2312,6 +2494,45 @@ document
     autoPrimerCurrentIndex = chooseInitialAutoPrimerIndex(autoPrimerCandidates);
     renderAutoPrimer();
   });
+
+
+
+/* =========================================================
+   配列コピー
+========================================================= */
+
+async function copySequenceToClipboard(sequence, button) {
+
+  function showCopiedState() {
+    button.classList.add("copied");
+
+    setTimeout(function() {
+      button.classList.remove("copied");
+    }, 1200);
+  }
+
+  try {
+
+    await navigator.clipboard.writeText(sequence);
+    showCopiedState();
+
+  } catch (error) {
+
+    const textarea =
+      document.createElement("textarea");
+
+    textarea.value = sequence;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+
+    showCopiedState();
+  }
+}
 
 </script>
 
