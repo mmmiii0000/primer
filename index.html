@@ -796,6 +796,192 @@
       overflow-wrap: anywhere !important;
     }
 
+
+    /* ===== 入力文字数 ===== */
+    .input-with-count {
+      width: 100%;
+    }
+
+    .input-with-count textarea {
+      display: block;
+    }
+
+    .char-count {
+      margin-top: 5px;
+      padding-right: 2px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.2;
+      text-align: right;
+      user-select: none;
+    }
+
+    /* ===== 自動Primer F/R切替 ===== */
+    .auto-primer-start-row {
+      justify-content: flex-start;
+    }
+
+    .auto-primer-direction {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 8px;
+      padding: 3px;
+      background: #eef2f7;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+
+    .auto-primer-direction input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .auto-primer-direction label {
+      min-width: 40px;
+      padding: 6px 11px;
+      border-radius: 7px;
+      color: var(--muted);
+      background: transparent;
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.2;
+      text-align: center;
+      cursor: pointer;
+      transition:
+        color 0.15s ease,
+        background-color 0.15s ease,
+        box-shadow 0.15s ease;
+    }
+
+    .auto-primer-direction input:checked + label {
+      color: #ffffff;
+      background: var(--primary);
+      box-shadow: 0 3px 8px rgba(49, 87, 213, 0.22);
+    }
+
+    /* ===== 制限酵素サイト付加 ===== */
+    .restriction-section {
+      margin-top: 28px;
+      padding: 20px;
+      background: var(--surface-soft);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+    }
+
+    .restriction-section h3 {
+      margin: 0 0 7px;
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .restriction-controls {
+      display: grid;
+      grid-template-columns: minmax(190px, 280px) 1fr;
+      gap: 10px;
+      align-items: end;
+      margin-top: 14px;
+    }
+
+    .restriction-select-wrap label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .restriction-select {
+      width: 100%;
+      height: 46px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      outline: none;
+      color: var(--text);
+      background: #ffffff;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .restriction-button {
+      margin-top: 0;
+      height: 46px;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+
+    .restriction-result-box {
+      margin-top: 16px;
+      padding: 16px 18px;
+      background: var(--primary-soft);
+      border: 1px solid #d9e0ff;
+      border-radius: var(--radius-md);
+    }
+
+    .restriction-output-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 8px;
+      max-width: 100%;
+    }
+
+    .restriction-output-sequence {
+      min-width: 0;
+      font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        Menlo,
+        monospace;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.8;
+      letter-spacing: 0.03em;
+      word-break: break-all;
+    }
+
+    .restriction-site-highlight {
+      display: inline-block;
+      padding: 0 3px;
+      color: var(--danger);
+      background: var(--danger-soft);
+      border-radius: 4px;
+      font-weight: 900;
+    }
+
+    .restriction-meta {
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 760px) {
+      .auto-primer-direction {
+        margin-left: 0;
+      }
+
+      .restriction-controls {
+        grid-template-columns: 1fr;
+      }
+    }
+
+
+    .standalone-restriction-section {
+      margin-top: 38px;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+    }
+
+    .standalone-restriction-section .section-title {
+      margin-top: 36px;
+    }
+
   </style>
 
 </head>
@@ -812,12 +998,13 @@
 
   <!-- DNA配列 -->
   <h2>塩基配列（全長）を入力</h2>
-
-  
+  <div class="input-with-count">  
   <textarea
     id="sequence"
     placeholder="アミノ酸に対応する塩基配列（5' → 3'）を入力してください&#10;例：ATGAAAGCTGCT..."
   ></textarea>
+    <div class="char-count" data-count-for="sequence">0文字</div>
+  </div>
 
 
   <!-- 変異 -->
@@ -863,8 +1050,7 @@
    <p class="sequence-note"><br>
         Primer F：変異コドンに加えて、5'側6塩基と3'側18塩基を含めたプライマーを作成します。3'末端がA/Tの場合は、最も近いG/Cまで3'方向に延長します。<br>
         Primer R：Primer Fと同様の操作を、相補鎖（reverse complement）に対して行います。<br>
-        Tm：最近接塩基対法で計算します（Primer濃度 0.5 µM、Na<sup>+</sup> 50 mM）。Primer F / Rともに、<strong>変異コドン自体は含めず、変異コドンより3'側の配列のみ</strong>をTm計算に使用します。<br>
-        Codon Usage：大腸菌の値を用いています。
+        Tm：最近接塩基対法で計算します（Primer濃度 0.5 µM、Na<sup>+</sup> 50 mM）。Primer F / Rともに、<strong>変異コドン自体は含めず、変異コドンより3'側の配列のみ</strong>をTm計算に使用します。
     </p>
 
   <button id="designButton">
@@ -882,12 +1068,11 @@
     <h2 class="section-title">自動プライマー設計</h2>
 
     <p class="sequence-note">
-      Primerの開始塩基番号を指定し、その位置から3'方向へ、3'末端がG/CでTmが55〜60℃になるPrimerを自動で選択します。<br>
-      候補が複数ある場合は57.5℃に最も近いものを表示します。
+      開始塩基番号を指定し、その位置から3'方向へ、3'末端がG/CでTmが55〜60℃になるPrimerを自動で選択します。<br>
+      Fでは入力配列をそのまま5'→3'で使用し、Rでは入力配列を内部で逆向き相補鎖（reverse complement）の5'→3'に変換してから設計します。候補が複数ある場合は57.5℃に最も近いものを表示します。
     </p>
 
     <div class="auto-primer-start-row">
-      <label for="autoPrimerStart">開始塩基番号</label>
 
       <input
         type="number"
@@ -897,19 +1082,95 @@
       >
 
       <span>塩基目から開始</span>
-    </div>
 
-    <textarea
+      <div class="auto-primer-direction" aria-label="Primer方向">
+        <input
+          type="radio"
+          id="autoPrimerDirectionF"
+          name="autoPrimerDirection"
+          value="F"
+          checked
+        >
+        <label for="autoPrimerDirectionF">F</label>
+
+        <input
+          type="radio"
+          id="autoPrimerDirectionR"
+          name="autoPrimerDirection"
+          value="R"
+        >
+        <label for="autoPrimerDirectionR">R</label>
+      </div>
+
+    </div>
+    <div class="input-with-count">    <textarea
       id="autoPrimerSequence"
       class="tm-textarea"
       placeholder="5' → 3' の塩基配列を入力してください&#10;例：ATGCGATCGATCGATCGATCGC"
     ></textarea>
+      <div class="char-count" data-count-for="autoPrimerSequence">0文字</div>
+    </div>
 
     <button id="autoPrimerButton">
       設計
     </button>
 
     <div id="autoPrimerResult"></div>
+
+
+
+
+  </div>
+
+
+
+  <!-- 制限酵素サイト付加 -->
+  <div class="restriction-section standalone-restriction-section">
+
+    <h2 class="section-title">制限酵素サイト付加</h2>
+
+    <p class="sequence-note">
+      5'→3'の塩基配列を入力し、制限酵素を選択してください。
+      選択した制限酵素認識配列を入力配列の5'末端に付加します。
+    </p>
+
+    <div class="input-with-count">
+      <textarea
+        id="restrictionSequence"
+        class="tm-textarea"
+        placeholder="5' → 3' の塩基配列を入力してください&#10;例：ATGCGATCGATCGC"
+      ></textarea>
+      <div class="char-count" data-count-for="restrictionSequence">0文字</div>
+    </div>
+
+    <div class="restriction-controls">
+
+      <div class="restriction-select-wrap">
+        <label for="restrictionEnzyme">制限酵素</label>
+
+        <select id="restrictionEnzyme" class="restriction-select">
+          <option value="GGATCC" data-name="BamHI">BamHI — GGATCC</option>
+          <option value="AGATCT" data-name="BglII">BglII — AGATCT</option>
+          <option value="CATATG" data-name="NdeI">NdeI — CATATG</option>
+          <option value="GCGGCCGC" data-name="NotI">NotI — GCGGCCGC</option>
+          <option value="GTCGAC" data-name="SalI">SalI — GTCGAC</option>
+          <option value="CTGCAG" data-name="PstI">PstI — CTGCAG</option>
+          <option value="GAATTC" data-name="EcoRI">EcoRI — GAATTC</option>
+          <option value="AAGCTT" data-name="HindIII">HindIII — AAGCTT</option>
+        </select>
+      </div>
+
+      <button
+        id="restrictionAddButton"
+        type="button"
+        class="secondary-button restriction-button"
+      >
+        5'末端に付加
+      </button>
+
+    </div>
+
+    <div id="restrictionResult"></div>
 
   </div>
 
@@ -923,12 +1184,13 @@
       TmとGC率を求めたい塩基配列を5'→3'で入力してください。入力した配列全体を用いて、
       Primer濃度 0.5 µM、Na<sup>+</sup> 50 mMとしてTmを計算し、GC率も同時に表示します。
     </p>
-
-    <textarea
+    <div class="input-with-count">    <textarea
       id="tmSequence"
       class="tm-textarea"
       placeholder="5' → 3' の塩基配列を入力してください&#10;例：GCGATCGATCGATCGC"
     ></textarea>
+      <div class="char-count" data-count-for="tmSequence">0文字</div>
+    </div>
 
     <button id="tmCalculateButton" class="secondary-button">
       Tmを計算
@@ -947,12 +1209,13 @@
     <p class="sequence-note">
       塩基配列を5'→3'で入力してください。A↔T、G↔Cで相補鎖に変換した後、配列を反転し、逆向き相補鎖（reverse complement）を5'→3'で表示します。
     </p>
-
-    <textarea
+    <div class="input-with-count">    <textarea
       id="complementSequence"
       class="tm-textarea"
       placeholder="5' → 3' の塩基配列を入力してください&#10;例：ATGCGTAC"
     ></textarea>
+      <div class="char-count" data-count-for="complementSequence">0文字</div>
+    </div>
 
     <button id="complementButton" class="secondary-button">
       逆向き相補鎖に変換
@@ -2379,6 +2642,7 @@ let autoPrimerCandidates = [];
 let autoPrimerCurrentIndex = -1;
 let autoPrimerMessage = "";
 let autoPrimerMessageType = "";
+let autoPrimerDirection = "F";
 
 function buildAutoPrimerCandidates(sequence, startPosition) {
   const candidates = [];
@@ -2400,7 +2664,8 @@ function buildAutoPrimerCandidates(sequence, startPosition) {
       tm: tm,
       gc: calculateGCPercent(primer),
       startPosition: startPosition,
-      endPosition: end
+      endPosition: end,
+      direction: autoPrimerDirection
     });
   }
 
@@ -2475,7 +2740,7 @@ function renderAutoPrimer() {
   result.innerHTML = `
     ${messageHtml}
     <div class="auto-primer-result-box">
-      <strong>Primer (5'→3')</strong>
+      <strong>Primer ${candidate.direction} (5'→3')</strong>
 
       <div class="auto-primer-sequence">
         ${candidate.sequence}
@@ -2495,6 +2760,7 @@ function renderAutoPrimer() {
       </div>
 
       <div class="auto-primer-stats">
+        <span>方向：${candidate.direction}</span>
         <span>開始：${candidate.startPosition} 塩基目</span>
         <span>終了：${candidate.endPosition} 塩基目</span>
         <span>Length：${candidate.length} nt</span>
@@ -2548,6 +2814,21 @@ document
       document.getElementById("autoPrimerStart").value
     );
 
+    const directionInput =
+      document.querySelector(
+        'input[name="autoPrimerDirection"]:checked'
+      );
+
+    autoPrimerDirection =
+      directionInput
+        ? directionInput.value
+        : "F";
+
+    const workingSequence =
+      autoPrimerDirection === "R"
+        ? reverseComplement(sequence)
+        : sequence;
+
     result.innerHTML = "";
     autoPrimerCandidates = [];
     autoPrimerCurrentIndex = -1;
@@ -2573,7 +2854,7 @@ document
       return;
     }
 
-    if (startPosition > sequence.length) {
+    if (startPosition > workingSequence.length) {
       result.innerHTML = `
         <div class="error">
           開始塩基番号が入力配列の長さを超えています。
@@ -2583,14 +2864,14 @@ document
     }
 
     autoPrimerCandidates = buildAutoPrimerCandidates(
-      sequence,
+      workingSequence,
       startPosition
     );
 
     if (autoPrimerCandidates.length === 0) {
       result.innerHTML = `
         <div class="error">
-          指定した開始位置以降に、3'末端をG/CにできるPrimer候補がありません。
+          指定した開始位置以降に、3'末端をG/CにできるPrimer候補がありません。F/R方向または開始位置を確認してください。
         </div>
       `;
       return;
@@ -2600,6 +2881,185 @@ document
     renderAutoPrimer();
   });
 
+
+
+
+/* =========================================================
+   塩基配列入力欄の文字数表示
+   空白・改行は数えない
+========================================================= */
+function updateCharacterCount(inputId) {
+
+  const input =
+    document.getElementById(inputId);
+
+  const counter =
+    document.querySelector(
+      `[data-count-for="${inputId}"]`
+    );
+
+  if (!input || !counter) {
+    return;
+  }
+
+  const count =
+    input.value
+      .replace(/\s/g, "")
+      .length;
+
+  counter.textContent =
+    `${count}文字`;
+}
+
+[
+  "sequence",
+  "autoPrimerSequence",
+  "restrictionSequence",
+  "tmSequence",
+  "complementSequence"
+].forEach(function(inputId) {
+
+  const input =
+    document.getElementById(inputId);
+
+  if (!input) {
+    return;
+  }
+
+  input.addEventListener(
+    "input",
+    function () {
+      updateCharacterCount(inputId);
+    }
+  );
+
+  updateCharacterCount(inputId);
+});
+
+
+
+/* =========================================================
+   制限酵素サイト付加
+========================================================= */
+document
+  .getElementById("restrictionAddButton")
+  .addEventListener("click", function () {
+
+    const result =
+      document.getElementById(
+        "restrictionResult"
+      );
+
+    const inputSequence =
+      cleanSequence(
+        document.getElementById(
+          "restrictionSequence"
+        ).value
+      );
+
+    result.innerHTML = "";
+
+
+    if (inputSequence.length === 0) {
+
+      result.innerHTML = `
+        <div class="error" style="margin-top: 14px;">
+          制限酵素サイトを付加する塩基配列を入力してください。
+        </div>
+      `;
+
+      return;
+    }
+
+
+    if (!/^[ATGC]+$/.test(inputSequence)) {
+
+      result.innerHTML = `
+        <div class="error" style="margin-top: 14px;">
+          塩基配列にはA、T、G、Cのみ使用してください。
+        </div>
+      `;
+
+      return;
+    }
+
+
+    const select =
+      document.getElementById(
+        "restrictionEnzyme"
+      );
+
+    const site =
+      select.value;
+
+    const selectedOption =
+      select.options[
+        select.selectedIndex
+      ];
+
+    const enzymeName =
+      selectedOption.dataset.name;
+
+    const combinedSequence =
+      site +
+      inputSequence;
+
+
+    result.innerHTML = `
+      <div class="restriction-result-box">
+
+        <strong>
+          ${enzymeName} siteを5'末端に付加
+        </strong>
+
+        <div class="restriction-output-row">
+
+          <div class="restriction-output-sequence">
+            5' -
+            <span class="restriction-site-highlight">${site}</span>${inputSequence}
+            - 3'
+          </div>
+
+          <button
+            type="button"
+            class="copy-button"
+            aria-label="配列をコピー"
+            title="配列をコピー"
+            onclick="copySequenceToClipboard('${combinedSequence}', this)"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect
+                x="9"
+                y="9"
+                width="10"
+                height="10"
+                rx="2"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              ></rect>
+
+              <path
+                d="M15 9V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+              ></path>
+            </svg>
+          </button>
+
+        </div>
+
+        <div class="restriction-meta">
+          認識配列：${site} ／
+          元配列：${inputSequence.length} nt ／
+          付加後Length：${combinedSequence.length} nt
+        </div>
+
+      </div>
+    `;
+  });
 
 
 /* =========================================================
