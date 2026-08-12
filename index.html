@@ -653,8 +653,9 @@
     }
 
     #result td.primer-sequence-cell .primer-cell-content > div:first-child {
-      white-space: nowrap;
-      word-break: normal;
+      white-space: normal;
+      word-break: break-all;
+      overflow-wrap: anywhere;
     }
 
     /* 自動Primer：コピーアイコンを配列枠の内側右端へ */
@@ -695,6 +696,104 @@
       #result table {
         min-width: 1080px;
       }
+    }
+
+
+    /* ===== 結果表：横スクロールなしで画面幅に収める ===== */
+    #result {
+      overflow-x: visible;
+    }
+
+    #result table {
+      width: 100%;
+      min-width: 0;
+      table-layout: fixed;
+      display: table;
+      overflow: visible;
+      white-space: normal;
+    }
+
+    #result th,
+    #result td {
+      min-width: 0;
+      padding-left: 8px;
+      padding-right: 8px;
+    }
+
+    #result td.primer-sequence-cell {
+      min-width: 0;
+    }
+
+    #result td.primer-sequence-cell .primer-cell-content > .primer-sequence-text {
+      white-space: normal;
+      word-break: break-all;
+      overflow-wrap: anywhere;
+    }
+
+    /* 一変異導入用：G/C延長ボタンとコピーアイコンを横並び */
+    .primer-action-row {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 4px;
+      max-width: 100%;
+    }
+
+    .primer-action-row .extend-button,
+    .primer-action-row .copy-button {
+      margin-top: 0;
+    }
+
+    @media (max-width: 760px) {
+      #result table {
+        display: table;
+        width: 100%;
+        min-width: 0;
+        overflow: visible;
+        white-space: normal;
+      }
+
+      #result th,
+      #result td {
+        min-width: 0;
+        padding: 9px 5px;
+        font-size: 11px;
+      }
+
+      #result td.sequence {
+        min-width: 0;
+        white-space: normal;
+      }
+
+      #result .extend-button {
+        padding: 5px 7px;
+        font-size: 10px;
+      }
+
+      .primer-action-row {
+        gap: 4px;
+      }
+    }
+
+
+    /* 最終優先：表は横スクロールさせない */
+    #result table {
+      min-width: 0 !important;
+      width: 100% !important;
+      table-layout: fixed !important;
+      display: table !important;
+      white-space: normal !important;
+    }
+
+    #result {
+      overflow-x: visible !important;
+    }
+
+    #result td.primer-sequence-cell .primer-sequence-text {
+      white-space: normal !important;
+      word-break: break-all !important;
+      overflow-wrap: anywhere !important;
     }
 
   </style>
@@ -1518,14 +1617,23 @@ function makePrimerCell(
   return `
     <div class="primer-cell-content">
 
-      <div>
+      <div class="primer-sequence-text">
         ${highlightMutation(
           primer,
           mutationStart
         )}
       </div>
 
-      <div class="copy-row">
+      <div class="primer-action-row">
+
+        <button
+          type="button"
+          class="extend-button"
+          onclick="extendPrimerRow('${rowId}', '${direction}', this)"
+        >
+          次のG/Cまで延長する
+        </button>
+
         <button
           type="button"
           class="copy-button"
@@ -1534,19 +1642,15 @@ function makePrimerCell(
           onclick="copySequenceToClipboard('${primer}', this)"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="9" y="9" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"></rect>
-            <path d="M15 9V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+            <rect x="9" y="9" width="10" height="10" rx="2"
+              fill="none" stroke="currentColor" stroke-width="1.8"></rect>
+            <path d="M15 9V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"
+              fill="none" stroke="currentColor" stroke-width="1.8"
+              stroke-linecap="round"></path>
           </svg>
         </button>
-      </div>
 
-      <button
-        type="button"
-        class="extend-button"
-        onclick="extendPrimerRow('${rowId}', '${direction}', this)"
-      >
-        次のG/Cまで延長する
-      </button>
+      </div>
 
     </div>
   `;
