@@ -911,6 +911,85 @@
       }
     }
 
+  
+    /* ---------- 折りたたみ式の注意メッセージ ---------- */
+
+    .notice-details {
+      position: relative;
+      display: inline-block;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    .notice-details > summary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      padding: 0;
+      list-style: none;
+      border: 1px solid #e2b84d;
+      border-radius: 50%;
+      color: #8a5a00;
+      background: #fff8e6;
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .notice-details > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .notice-details > summary:hover {
+      background: #fff1c7;
+    }
+
+    .notice-details[open] > summary {
+      background: #ffefbd;
+      border-color: #d5a62f;
+    }
+
+    .notice-popover {
+      position: absolute;
+      z-index: 30;
+      top: calc(100% + 7px);
+      left: 0;
+      width: min(420px, 78vw);
+      padding: 12px 14px;
+      color: #8a5a00;
+      background: #fff8e6;
+      border: 1px solid #f2cf7a;
+      border-radius: 10px;
+      box-shadow: 0 10px 28px rgba(25, 42, 70, 0.14);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.65;
+      text-align: left;
+      white-space: normal;
+    }
+
+    .mutation-summary-line,
+    .auto-primer-title-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      max-width: 100%;
+    }
+
+    .auto-primer-title-line {
+      font-weight: 700;
+    }
+
+    @media (max-width: 760px) {
+      .notice-popover {
+        width: min(340px, 82vw);
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -1490,6 +1569,21 @@
         return calculateTmSafe(primer.slice(mutationStart + 3));
       }
 
+      function warningDetailsHtml(message, ariaLabel = "注意事項を表示") {
+        if (!message) return "";
+
+        return `
+          <details class="notice-details">
+            <summary
+              aria-label="${ariaLabel}"
+              title="${ariaLabel}"
+            >⚠</summary>
+            <div class="notice-popover">
+              ${message}
+            </div>
+          </details>`;
+      }
+
       function primerCellHtml(primer, mutationStart, rowId, direction) {
         return `
           <div class="primer-cell-content">
@@ -1816,19 +1910,21 @@
           rows.push(mutationRowHtml(rowData));
         });
 
-        const warningHtml = warnings.size
-          ? `
-            <div class="warning">
-              <strong>⚠ Primer長が不足しています</strong><br>
-              ${[...warnings].join("<br>")}<br>
-              可能な範囲でPrimer候補を表示しています。
-            </div>`
+        const mutationWarningHtml = warnings.size
+          ? warningDetailsHtml(
+              `<strong>Primer長が不足しています</strong><br>` +
+              `${[...warnings].join("<br>")}<br>` +
+              `可能な範囲でPrimer候補を表示しています。`,
+              "Primer長に関する注意事項を表示"
+            )
           : "";
 
         result.innerHTML = `
-          ${warningHtml}
           <div class="info">
-            <strong>変異：</strong>${detectedAA}${position}${mutantAA}<br>
+            <span class="mutation-summary-line">
+              <strong>変異：</strong>${detectedAA}${position}${mutantAA}
+              ${mutationWarningHtml}
+            </span><br>
             <strong>元のコドン：</strong>${originalCodon}<br>
             <strong>変異後コドン候補：</strong>${candidateCodons.join(", ")}
           </div>
@@ -2006,16 +2102,28 @@
           return "";
         }
 
-        const messageHtml = state.message
-          ? `<div class="${state.messageType === "error" ? "error" : "warning"}">${state.message}</div>`
-          : "";
+        const errorMessageHtml =
+          state.message && state.messageType === "error"
+            ? `<div class="error">${state.message}</div>`
+            : "";
+
+        const warningIconHtml =
+          state.message && state.messageType === "warning"
+            ? warningDetailsHtml(
+                state.message,
+                `Primer ${candidate.direction} の注意事項を表示`
+              )
+            : "";
 
         return `
           <div class="auto-primer-result-slot">
-            ${messageHtml}
+            ${errorMessageHtml}
 
             <div class="auto-primer-result-box">
-              <strong>Primer ${candidate.direction} (5'→3')</strong>
+              <div class="auto-primer-title-line">
+                <strong>Primer ${candidate.direction} (5'→3')</strong>
+                ${warningIconHtml}
+              </div>
 
               <div class="auto-primer-sequence">
                 ${candidate.sequence}
@@ -2418,6 +2526,18 @@
         }
       });
     })();
-  </script>
+  
+      /* 注意ポップアップ：外側をクリックしたら閉じる */
+      document.addEventListener("click", function (event) {
+        document
+          .querySelectorAll(".notice-details[open]")
+          .forEach(function (details) {
+            if (!details.contains(event.target)) {
+              details.removeAttribute("open");
+            }
+          });
+      });
+
+</script>
 </body>
 </html>
