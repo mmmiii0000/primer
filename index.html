@@ -378,25 +378,28 @@
 
     .primer-action-row {
       display: inline-flex;
+      flex-wrap: nowrap;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 4px;
       margin-top: 4px;
       max-width: 100%;
+      white-space: nowrap;
     }
 
     .extend-button {
       width: auto;
       margin-top: 0;
-      padding: 6px 10px;
+      padding: 5px 6px;
       border: 1px solid #cfd8f6;
       border-radius: 8px;
       color: var(--primary);
       background: #ffffff;
       box-shadow: none;
-      font-size: 11px;
+      font-size: 9.5px;
       font-weight: 700;
-      line-height: 1.3;
+      line-height: 1.25;
+      white-space: nowrap;
     }
 
     .extend-button:hover {
@@ -814,6 +817,52 @@
         margin-left: 0;
       }
     }
+  
+    #result .primer-action-row .copy-button {
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+      flex: 0 0 28px;
+    }
+
+    #result .primer-action-row .copy-button svg {
+      width: 15px;
+      height: 15px;
+    }
+
+  
+    @media (max-width: 760px) {
+      #result .primer-action-row {
+        gap: 2px;
+        flex-wrap: nowrap;
+      }
+
+      #result .extend-button {
+        padding: 4px 3px;
+        font-size: 7.5px;
+        letter-spacing: -0.03em;
+      }
+
+      #result .primer-action-row .copy-button {
+        width: 22px;
+        height: 22px;
+        min-width: 22px;
+        flex-basis: 22px;
+        border-radius: 6px;
+      }
+
+      #result .primer-action-row .copy-button svg {
+        width: 12px;
+        height: 12px;
+      }
+    }
+
+  
+    /* 一変異導入用：全長塩基配列入力欄を他の配列入力欄と同じ高さに */
+    #sequence {
+      min-height: 120px;
+    }
+
   </style>
 </head>
 <body>
@@ -1404,12 +1453,25 @@
               <button
                 type="button"
                 class="extend-button"
-                data-action="extend-primer"
+                data-action="adjust-primer"
                 data-row-id="${rowId}"
                 data-direction="${direction}"
+                data-step="-1"
               >
-                次のG/Cまで延長する
+                前のG/Cまで削除
               </button>
+
+              <button
+                type="button"
+                class="extend-button"
+                data-action="adjust-primer"
+                data-row-id="${rowId}"
+                data-direction="${direction}"
+                data-step="1"
+              >
+                次のG/Cまで延長
+              </button>
+
               ${copyButtonHtml(primer)}
             </div>
           </div>`;
@@ -1440,38 +1502,111 @@
           </tr>`;
       }
 
-      function extendMutationPrimer(source, direction) {
+      function adjustMutationPrimer(source, direction, step) {
         if (direction === "F") {
-          let position = source.forwardEnd;
-          while (
-            position < source.mutatedSequence.length &&
-            !isGC(source.mutatedSequence[position])
-          ) {
-            position++;
+          if (step > 0) {
+            let position = source.forwardEnd;
+
+            while (
+              position < source.mutatedSequence.length &&
+              !isGC(source.mutatedSequence[position])
+            ) {
+              position++;
+            }
+
+            if (position >= source.mutatedSequence.length) return null;
+
+            const forwardEnd = position + 1;
+
+            return {
+              ...source,
+              primerF: source.mutatedSequence.slice(
+                source.forwardStart,
+                forwardEnd
+              ),
+              forwardEnd
+            };
           }
 
-          if (position >= source.mutatedSequence.length) return null;
+          const mutationEnd =
+            source.forwardStart +
+            source.mutationStartF +
+            3;
+
+          let position =
+            source.forwardEnd - 2;
+
+          while (
+            position >= mutationEnd &&
+            !isGC(source.mutatedSequence[position])
+          ) {
+            position--;
+          }
+
+          if (position < mutationEnd) return null;
 
           const forwardEnd = position + 1;
+
           return {
             ...source,
-            primerF: source.mutatedSequence.slice(source.forwardStart, forwardEnd),
+            primerF: source.mutatedSequence.slice(
+              source.forwardStart,
+              forwardEnd
+            ),
             forwardEnd
           };
         }
 
-        let position = source.reverseStart - 1;
-        while (position >= 0 && !isGC(source.mutatedSequence[position])) {
-          position--;
+        if (step > 0) {
+          let position =
+            source.reverseStart - 1;
+
+          while (
+            position >= 0 &&
+            !isGC(source.mutatedSequence[position])
+          ) {
+            position--;
+          }
+
+          if (position < 0) return null;
+
+          const reverseStart = position;
+          const reverseTemplate =
+            source.mutatedSequence.slice(
+              reverseStart,
+              source.reverseEnd
+            );
+
+          return {
+            ...source,
+            primerR: reverseComplement(reverseTemplate),
+            reverseStart
+          };
         }
 
-        if (position < 0) return null;
+        const codonStart =
+          source.reverseEnd -
+          source.mutationStartR -
+          3;
+
+        let position =
+          source.reverseStart + 1;
+
+        while (
+          position < codonStart &&
+          !isGC(source.mutatedSequence[position])
+        ) {
+          position++;
+        }
+
+        if (position >= codonStart) return null;
 
         const reverseStart = position;
-        const reverseTemplate = source.mutatedSequence.slice(
-          reverseStart,
-          source.reverseEnd
-        );
+        const reverseTemplate =
+          source.mutatedSequence.slice(
+            reverseStart,
+            source.reverseEnd
+          );
 
         return {
           ...source,
@@ -1480,36 +1615,75 @@
         };
       }
 
-      function handlePrimerExtension(button) {
-        const source = mutationState.rows.get(button.dataset.rowId);
+      function handlePrimerAdjustment(button) {
+        const source =
+          mutationState.rows.get(button.dataset.rowId);
+
         if (!source) return;
 
-        const extended = extendMutationPrimer(source, button.dataset.direction);
-        if (!extended) {
+        const step =
+          Number(button.dataset.step);
+
+        const adjusted =
+          adjustMutationPrimer(
+            source,
+            button.dataset.direction,
+            step
+          );
+
+        if (!adjusted) {
           button.disabled = true;
-          button.textContent = "これ以上G/Cなし";
+          button.textContent =
+            step < 0
+              ? "これ以上削れない"
+              : "これ以上G/Cなし";
           return;
         }
 
         button.disabled = true;
-        button.textContent = "延長済み";
+        button.textContent =
+          step < 0
+            ? "短縮済み"
+            : "延長済み";
 
-        const rootNo = source.rootNo;
-        const variantNo = (mutationState.variantCounts.get(rootNo) ?? 1) + 1;
-        mutationState.variantCounts.set(rootNo, variantNo);
+        const rootNo =
+          source.rootNo;
 
-        const rowId = `primer-row-${rootNo}-${variantNo}`;
+        const variantNo =
+          (mutationState.variantCounts.get(rootNo) ?? 1) + 1;
+
+        mutationState.variantCounts.set(
+          rootNo,
+          variantNo
+        );
+
+        const rowId =
+          `primer-row-${rootNo}-${variantNo}`;
+
         const newData = {
-          ...extended,
+          ...adjusted,
           rowId,
           displayNo: `${rootNo}-${variantNo}`
         };
-        mutationState.rows.set(rowId, newData);
 
-        const groupRows = document.querySelectorAll(`tr[data-root-no="${rootNo}"]`);
-        groupRows[groupRows.length - 1].insertAdjacentHTML(
+        mutationState.rows.set(
+          rowId,
+          newData
+        );
+
+        const groupRows =
+          document.querySelectorAll(
+            `tr[data-root-no="${rootNo}"]`
+          );
+
+        groupRows[
+          groupRows.length - 1
+        ].insertAdjacentHTML(
           "afterend",
-          mutationRowHtml(newData, true)
+          mutationRowHtml(
+            newData,
+            true
+          )
         );
       }
 
@@ -2064,9 +2238,15 @@
           return;
         }
 
-        const extendButton = event.target.closest('[data-action="extend-primer"]');
-        if (extendButton) {
-          handlePrimerExtension(extendButton);
+        const adjustButton =
+          event.target.closest(
+            '[data-action="adjust-primer"]'
+          );
+
+        if (adjustButton) {
+          handlePrimerAdjustment(
+            adjustButton
+          );
           return;
         }
 
