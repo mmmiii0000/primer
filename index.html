@@ -1884,7 +1884,27 @@
         }
 
         const candidateCodons = [...AA_TO_CODONS[mutantAA]].sort(
-          (a, b) => CODON_USAGE[b] - CODON_USAGE[a]
+          (a, b) => {
+            const changesA = countBaseChanges(originalCodon, a);
+            const changesB = countBaseChanges(originalCodon, b);
+
+            const scoreA =
+              changesA === 0
+                ? Infinity
+                : CODON_USAGE[a] / changesA;
+
+            const scoreB =
+              changesB === 0
+                ? Infinity
+                : CODON_USAGE[b] / changesB;
+
+            if (scoreB !== scoreA) {
+              return scoreB - scoreA;
+            }
+
+            /* 同点ならCodon usageが高い方を優先 */
+            return CODON_USAGE[b] - CODON_USAGE[a];
+          }
         );
         const warnings = new Set();
         const rows = [];
