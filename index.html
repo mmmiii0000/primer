@@ -587,13 +587,17 @@
     }
 
     .auto-primer-stats {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px 18px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px 12px;
       margin-top: 12px;
       color: var(--muted);
       font-size: 13px;
       font-weight: 700;
+    }
+
+    .auto-primer-stats span {
+      min-width: 0;
     }
 
     .auto-primer-controls {
@@ -861,6 +865,50 @@
     /* 一変異導入用：全長塩基配列入力欄を他の配列入力欄と同じ高さに */
     #sequence {
       min-height: 120px;
+    }
+
+  
+    /* ---------- 自動Primer：F/R結果を同時表示 ---------- */
+
+    .auto-primer-results-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+      align-items: start;
+    }
+
+    .auto-primer-results-grid.single {
+      grid-template-columns: 1fr;
+    }
+
+    .auto-primer-result-slot {
+      min-width: 0;
+      align-self: start;
+    }
+
+    .auto-primer-results-grid .auto-primer-result-box {
+      margin-top: 0;
+    }
+
+    .auto-primer-result-slot > .error,
+    .auto-primer-result-slot > .warning {
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+
+    @media (max-width: 760px) {
+      .auto-primer-results-grid,
+      .auto-primer-results-grid.single {
+        grid-template-columns: 1fr;
+      }
+    }
+
+  
+    @media (max-width: 760px) {
+      .auto-primer-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
   </style>
@@ -1816,11 +1864,19 @@
          4. 自動Primer設計
       ====================================================== */
 
+      function createAutoPrimerState() {
+        return {
+          candidates: [],
+          currentIndex: -1,
+          message: "",
+          messageType: "",
+          error: ""
+        };
+      }
+
       const autoState = {
-        candidates: [],
-        currentIndex: -1,
-        message: "",
-        messageType: ""
+        F: createAutoPrimerState(),
+        R: createAutoPrimerState()
       };
 
       function resolveStartPosition(sequenceLength, enteredPosition, originMode) {
@@ -1933,138 +1989,237 @@
         };
       }
 
-      function renderAutoPrimer() {
-        const result = $("autoPrimerResult");
-        const candidate = autoState.candidates[autoState.currentIndex];
+      function renderAutoPrimerSlot(direction) {
+        const state = autoState[direction];
 
-        if (!candidate) {
-          result.innerHTML = "";
-          return;
+        if (state.error) {
+          return `
+            <div class="auto-primer-result-slot">
+              ${errorHtml(state.error)}
+            </div>`;
         }
 
-        const messageHtml = autoState.message
-          ? `<div class="${autoState.messageType === "error" ? "error" : "warning"}">${autoState.message}</div>`
+        const candidate =
+          state.candidates[state.currentIndex];
+
+        if (!candidate) {
+          return "";
+        }
+
+        const messageHtml = state.message
+          ? `<div class="${state.messageType === "error" ? "error" : "warning"}">${state.message}</div>`
           : "";
 
-        result.innerHTML = `
-          ${messageHtml}
-          <div class="auto-primer-result-box">
-            <strong>Primer ${candidate.direction} (5'→3')</strong>
+        return `
+          <div class="auto-primer-result-slot">
+            ${messageHtml}
 
-            <div class="auto-primer-sequence">
-              ${candidate.sequence}
-              ${copyButtonHtml(candidate.sequence)}
-            </div>
+            <div class="auto-primer-result-box">
+              <strong>Primer ${candidate.direction} (5'→3')</strong>
 
-            <div class="auto-primer-stats">
-              <span>方向：${candidate.direction}</span>
-              <span>
-                起点：${candidate.originMode === "back" ? "後ろから" : "前から"}
-                ${candidate.enteredPosition} 塩基目
-              </span>
-              <span>元配列上：${candidate.startPosition} 塩基目</span>
-              <span>範囲：${candidate.rangeStart}–${candidate.rangeEnd} 塩基目</span>
-              <span>Length：${candidate.length} nt</span>
-              <span>Tm：${candidate.tm.toFixed(1)} ℃</span>
-              <span>GC率：${candidate.gc.toFixed(1)}%</span>
-              <span>3'末端：${candidate.sequence.slice(-1)}</span>
-            </div>
+              <div class="auto-primer-sequence">
+                ${candidate.sequence}
+                ${copyButtonHtml(candidate.sequence)}
+              </div>
 
-            <div class="auto-primer-controls">
-              <button
-                type="button"
-                class="secondary-button"
-                data-action="auto-step"
-                data-step="-1"
-                ${autoState.currentIndex === 0 ? "disabled" : ""}
-              >
-                前のG/Cまで削る
-              </button>
+              <div class="auto-primer-stats">
+                <span>
+                  起点：${candidate.originMode === "back" ? "後ろから" : "前から"}
+                  ${candidate.enteredPosition} 塩基目
+                </span>
+                <span>元配列上：${candidate.startPosition} 塩基目</span>
+                <span>範囲：${candidate.rangeStart}–${candidate.rangeEnd} 塩基目</span>
+                <span>Length：${candidate.length} nt</span>
+                <span>Tm：${candidate.tm.toFixed(1)} ℃</span>
+                <span>GC率：${candidate.gc.toFixed(1)}%</span>
+              </div>
 
-              <button
-                type="button"
-                class="secondary-button"
-                data-action="auto-step"
-                data-step="1"
-                ${autoState.currentIndex === autoState.candidates.length - 1 ? "disabled" : ""}
-              >
-                次のG/Cまで延長する
-              </button>
+              <div class="auto-primer-controls">
+                <button
+                  type="button"
+                  class="secondary-button"
+                  data-action="auto-step"
+                  data-direction="${direction}"
+                  data-step="-1"
+                  ${state.currentIndex === 0 ? "disabled" : ""}
+                >
+                  前のG/Cまで削る
+                </button>
+
+                <button
+                  type="button"
+                  class="secondary-button"
+                  data-action="auto-step"
+                  data-direction="${direction}"
+                  data-step="1"
+                  ${state.currentIndex === state.candidates.length - 1 ? "disabled" : ""}
+                >
+                  次のG/Cまで延長する
+                </button>
+              </div>
             </div>
           </div>`;
       }
 
-      function stepAutoPrimer(step) {
-        const nextIndex = autoState.currentIndex + step;
-        if (nextIndex < 0 || nextIndex >= autoState.candidates.length) return;
+      function renderAutoPrimer() {
+        const result = $("autoPrimerResult");
 
-        autoState.currentIndex = nextIndex;
-        autoState.message = "";
-        autoState.messageType = "";
+        const slots = [
+          renderAutoPrimerSlot("F"),
+          renderAutoPrimerSlot("R")
+        ].filter(Boolean);
+
+        if (!slots.length) {
+          result.innerHTML = "";
+          return;
+        }
+
+        result.innerHTML = `
+          <div class="auto-primer-results-grid ${slots.length === 1 ? "single" : ""}">
+            ${slots.join("")}
+          </div>`;
+      }
+
+      function stepAutoPrimer(direction, step) {
+        const state = autoState[direction];
+        if (!state) return;
+
+        const nextIndex =
+          state.currentIndex + step;
+
+        if (
+          nextIndex < 0 ||
+          nextIndex >= state.candidates.length
+        ) {
+          return;
+        }
+
+        state.currentIndex = nextIndex;
+        state.message = "";
+        state.messageType = "";
+        state.error = "";
+
+        renderAutoPrimer();
+      }
+
+      function resetAutoPrimerDirection(direction) {
+        autoState[direction] =
+          createAutoPrimerState();
+      }
+
+      function setAutoPrimerError(direction, message) {
+        resetAutoPrimerDirection(direction);
+        autoState[direction].error = message;
         renderAutoPrimer();
       }
 
       function handleAutoPrimerDesign() {
-        const result = $("autoPrimerResult");
-        const sequence = cleanSequence($("autoPrimerSequence").value);
-        const enteredPosition = Number($("autoPrimerStart").value);
-        const originMode =
-          document.querySelector('input[name="autoPrimerOrigin"]:checked')?.value ??
-          "front";
-        const direction =
-          document.querySelector('input[name="autoPrimerDirection"]:checked')?.value ??
-          "F";
+        const sequence =
+          cleanSequence(
+            $("autoPrimerSequence").value
+          );
 
-        Object.assign(autoState, {
-          candidates: [],
-          currentIndex: -1,
-          message: "",
-          messageType: ""
-        });
-        result.innerHTML = "";
+        const enteredPosition =
+          Number(
+            $("autoPrimerStart").value
+          );
+
+        const originMode =
+          document.querySelector(
+            'input[name="autoPrimerOrigin"]:checked'
+          )?.value ?? "front";
+
+        const direction =
+          document.querySelector(
+            'input[name="autoPrimerDirection"]:checked'
+          )?.value ?? "F";
+
+        /*
+          選択した方向だけを更新する。
+          例：
+          F → R と設計した場合は両方残る。
+          F → F と設計した場合はFだけ置き換わる。
+        */
+        resetAutoPrimerDirection(direction);
 
         if (!sequence) {
-          result.innerHTML = errorHtml("自動設計する塩基配列を入力してください。");
+          setAutoPrimerError(
+            direction,
+            "自動設計する塩基配列を入力してください。"
+          );
           return;
         }
+
         if (!isDNA(sequence)) {
-          result.innerHTML = errorHtml("塩基配列にはA、T、G、Cのみ使用してください。");
+          setAutoPrimerError(
+            direction,
+            "塩基配列にはA、T、G、Cのみ使用してください。"
+          );
           return;
         }
-        if (!Number.isInteger(enteredPosition) || enteredPosition < 1) {
-          result.innerHTML = errorHtml("開始位置は1以上の整数で入力してください。");
+
+        if (
+          !Number.isInteger(enteredPosition) ||
+          enteredPosition < 1
+        ) {
+          setAutoPrimerError(
+            direction,
+            "開始位置は1以上の整数で入力してください。"
+          );
           return;
         }
+
         if (enteredPosition > sequence.length) {
-          result.innerHTML = errorHtml("指定した開始位置が入力配列の長さを超えています。");
+          setAutoPrimerError(
+            direction,
+            "指定した開始位置が入力配列の長さを超えています。"
+          );
           return;
         }
 
-        const startPosition = resolveStartPosition(
-          sequence.length,
-          enteredPosition,
-          originMode
-        );
+        const startPosition =
+          resolveStartPosition(
+            sequence.length,
+            enteredPosition,
+            originMode
+          );
 
-        autoState.candidates = buildAutoPrimerCandidates({
-          sequence,
-          startPosition,
-          direction,
-          originMode,
-          enteredPosition
-        });
+        const state =
+          autoState[direction];
 
-        if (!autoState.candidates.length) {
-          result.innerHTML = errorHtml(
+        state.candidates =
+          buildAutoPrimerCandidates({
+            sequence,
+            startPosition,
+            direction,
+            originMode,
+            enteredPosition
+          });
+
+        if (!state.candidates.length) {
+          setAutoPrimerError(
+            direction,
             "指定した起点から、3'末端をG/CにできるPrimer候補がありません。F/R方向または開始位置を確認してください。"
           );
           return;
         }
 
-        const selection = selectInitialAutoPrimer(autoState.candidates);
-        autoState.currentIndex = selection.index;
-        autoState.message = selection.message;
-        autoState.messageType = selection.type;
+        const selection =
+          selectInitialAutoPrimer(
+            state.candidates
+          );
+
+        state.currentIndex =
+          selection.index;
+
+        state.message =
+          selection.message;
+
+        state.messageType =
+          selection.type;
+
+        state.error = "";
+
         renderAutoPrimer();
       }
 
@@ -2250,9 +2405,16 @@
           return;
         }
 
-        const autoStepButton = event.target.closest('[data-action="auto-step"]');
+        const autoStepButton =
+          event.target.closest(
+            '[data-action="auto-step"]'
+          );
+
         if (autoStepButton) {
-          stepAutoPrimer(Number(autoStepButton.dataset.step));
+          stepAutoPrimer(
+            autoStepButton.dataset.direction,
+            Number(autoStepButton.dataset.step)
+          );
         }
       });
     })();
