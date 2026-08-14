@@ -1907,6 +1907,32 @@
           }
         );
         const warnings = new Set();
+
+        /* 入力CDSの開始・終止コドンを確認 */
+        if (sequence.slice(0, 3) !== "ATG") {
+          warnings.add(
+            "最初が開始コドン（ATG）ではありません。"
+          );
+        }
+
+        const stopCodons = ["TAA", "TAG", "TGA"];
+        const endsAtCodonBoundary =
+          sequence.length % 3 === 0;
+
+        const lastCodon =
+          endsAtCodonBoundary && sequence.length >= 3
+            ? sequence.slice(-3)
+            : "";
+
+        if (
+          !endsAtCodonBoundary ||
+          !stopCodons.includes(lastCodon)
+        ) {
+          warnings.add(
+            "最後が終止コドン（TAA / TAG / TGA）ではありません。"
+          );
+        }
+
         const rows = [];
 
         candidateCodons.forEach((mutantCodon, index) => {
@@ -1932,10 +1958,9 @@
 
         const mutationWarningHtml = warnings.size
           ? warningDetailsHtml(
-              `<strong>Primer長が不足しています</strong><br>` +
-              `${[...warnings].join("<br>")}<br>` +
-              `可能な範囲でPrimer候補を表示しています。`,
-              "Primer長に関する注意事項を表示"
+              `<strong>注意事項</strong><br>` +
+              `${[...warnings].join("<br>")}`,
+              "一変異導入用Primerの注意事項を表示"
             )
           : "";
 
