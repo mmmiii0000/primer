@@ -136,6 +136,7 @@
       color: #98a2b3;
     }
 
+    #sequence,
     .tm-textarea {
       min-height: 120px;
     }
@@ -234,8 +235,7 @@
     }
 
     .info,
-    .error,
-    .warning {
+    .error {
       border-radius: var(--radius-md);
     }
 
@@ -257,15 +257,6 @@
       font-weight: 600;
     }
 
-    .warning {
-      margin-top: 18px;
-      padding: 16px 18px;
-      color: #8a5a00;
-      background: #fff8e6;
-      border: 1px solid #f2cf7a;
-      font-weight: 600;
-      line-height: 1.7;
-    }
 
     /* ---------- 一変異導入用Primer ---------- */
 
@@ -862,12 +853,6 @@
     }
 
   
-    /* 一変異導入用：全長塩基配列入力欄を他の配列入力欄と同じ高さに */
-    #sequence {
-      min-height: 120px;
-    }
-
-  
     /* ---------- 自動Primer：F/R結果を同時表示 ---------- */
 
     .auto-primer-results-grid {
@@ -891,8 +876,7 @@
       margin-top: 0;
     }
 
-    .auto-primer-result-slot > .error,
-    .auto-primer-result-slot > .warning {
+    .auto-primer-result-slot > .error {
       margin-top: 0;
       margin-bottom: 10px;
     }
@@ -1317,6 +1301,10 @@
 
       const PRIMER_CONC_M = 0.5e-6;
       const NA_CONC_M = 0.05;
+      const DNA_ERROR = "塩基配列にはA、T、G、Cのみ使用してください。";
+      const COMPLEMENT = { A: "T", T: "A", G: "C", C: "G" };
+      const STOP_CODONS = new Set(["TAA", "TAG", "TGA"]);
+      const AUTO_TM = { min: 55, max: 60, target: 57.5 };
 
       const AA_TO_CODONS = Object.entries(CODON_TABLE).reduce((map, [codon, aa]) => {
         (map[aa] ??= []).push(codon);
@@ -1345,7 +1333,7 @@
       }
 
       function complement(base) {
-        return { A: "T", T: "A", G: "C", C: "G" }[base];
+        return COMPLEMENT[base];
       }
 
       function reverseComplement(sequence) {
@@ -1361,6 +1349,35 @@
           (count, base, index) => count + (base !== mutantCodon[index] ? 1 : 0),
           0
         );
+      }
+
+      function basicDNAError(sequence, emptyMessage) {
+        if (!sequence) return emptyMessage;
+        return isDNA(sequence) ? "" : DNA_ERROR;
+      }
+
+      function mutationCodonScore(originalCodon, mutantCodon) {
+        const changes = countBaseChanges(originalCodon, mutantCodon);
+        return changes === 0 ? Infinity : CODON_USAGE[mutantCodon] / changes;
+      }
+
+      function sortMutationCodons(codons, originalCodon) {
+        return [...codons].sort((a, b) => {
+          const scoreDifference =
+            mutationCodonScore(originalCodon, b) - mutationCodonScore(originalCodon, a);
+          return scoreDifference || CODON_USAGE[b] - CODON_USAGE[a];
+        });
+      }
+
+      function codingSequenceWarnings(sequence) {
+        const warnings = [];
+        if (sequence.slice(0, 3) !== "ATG") {
+          warnings.push("最初が開始コドン（ATG）ではありません。");
+        }
+        if (!STOP_CODONS.has(sequence.slice(-3))) {
+          warnings.push("最後が終止コドン（TAA / TAG / TGA）ではありません。");
+        }
+        return warnings;
       }
 
       function calculateGCPercent(sequence) {
@@ -1861,7 +1878,7 @@
         };
 
         if (!sequence) return fail("塩基配列を入力してください。");
-        if (!isDNA(sequence)) return fail("塩基配列にはA、T、G、Cのみ使用してください。");
+        if (!isDNA(sequence)) return fail(DNA_ERROR);
         if (sequence.length % 3 !== 0) return fail("塩基配列の長さが3の倍数ではありません。");
         if (!Number.isInteger(position) || position < 1) return fail("残基番号を正しく入力してください。");
         if (originalAA && !AA_TO_CODONS[originalAA]) return fail("元のアミノ酸を1文字表記で入力してください。");
@@ -1883,55 +1900,8 @@
           );
         }
 
-        const candidateCodons = [...AA_TO_CODONS[mutantAA]].sort(
-          (a, b) => {
-            const changesA = countBaseChanges(originalCodon, a);
-            const changesB = countBaseChanges(originalCodon, b);
-
-            const scoreA =
-              changesA === 0
-                ? Infinity
-                : CODON_USAGE[a] / changesA;
-
-            const scoreB =
-              changesB === 0
-                ? Infinity
-                : CODON_USAGE[b] / changesB;
-
-            if (scoreB !== scoreA) {
-              return scoreB - scoreA;
-            }
-
-            /* 同点ならCodon usageが高い方を優先 */
-            return CODON_USAGE[b] - CODON_USAGE[a];
-          }
-        );
-        const warnings = new Set();
-
-        /* 入力CDSの開始・終止コドンを確認 */
-        if (sequence.slice(0, 3) !== "ATG") {
-          warnings.add(
-            "最初が開始コドン（ATG）ではありません。"
-          );
-        }
-
-        const stopCodons = ["TAA", "TAG", "TGA"];
-        const endsAtCodonBoundary =
-          sequence.length % 3 === 0;
-
-        const lastCodon =
-          endsAtCodonBoundary && sequence.length >= 3
-            ? sequence.slice(-3)
-            : "";
-
-        if (
-          !endsAtCodonBoundary ||
-          !stopCodons.includes(lastCodon)
-        ) {
-          warnings.add(
-            "最後が終止コドン（TAA / TAG / TGA）ではありません。"
-          );
-        }
+        const candidateCodons = sortMutationCodons(AA_TO_CODONS[mutantAA], originalCodon);
+        const warnings = new Set(codingSequenceWarnings(sequence));
 
         const rows = [];
 
@@ -2026,75 +1996,62 @@
           : enteredPosition;
       }
 
+      function autoPrimerCandidate({
+        primer, direction, originMode, enteredPosition, startPosition, rangeStart, rangeEnd
+      }) {
+        return {
+          sequence: primer,
+          direction,
+          originMode,
+          enteredPosition,
+          startPosition,
+          rangeStart,
+          rangeEnd,
+          length: primer.length,
+          tm: calculateTm(primer),
+          gc: calculateGCPercent(primer)
+        };
+      }
+
       function buildAutoPrimerCandidates({
-        sequence,
-        startPosition,
-        direction,
-        originMode,
-        enteredPosition
+        sequence, startPosition, direction, originMode, enteredPosition
       }) {
         const candidates = [];
 
         if (direction === "F") {
           const startIndex = startPosition - 1;
-
           for (let end = startIndex + 2; end <= sequence.length; end++) {
             if (!isGC(sequence[end - 1])) continue;
-
             const primer = sequence.slice(startIndex, end);
-            const tm = calculateTmSafe(primer);
-            if (tm === null) continue;
-
-            candidates.push({
-              sequence: primer,
-              direction: "F",
-              originMode,
-              enteredPosition,
-              startPosition,
-              rangeStart: startPosition,
-              rangeEnd: end,
-              length: primer.length,
-              tm,
-              gc: calculateGCPercent(primer)
-            });
+            candidates.push(autoPrimerCandidate({
+              primer, direction, originMode, enteredPosition, startPosition,
+              rangeStart: startPosition, rangeEnd: end
+            }));
           }
-        } else {
-          const rightEnd = startPosition;
-
-          for (let leftIndex = rightEnd - 2; leftIndex >= 0; leftIndex--) {
-            if (!isGC(sequence[leftIndex])) continue;
-
-            const primer = reverseComplement(sequence.slice(leftIndex, rightEnd));
-            const tm = calculateTmSafe(primer);
-            if (tm === null) continue;
-
-            candidates.push({
-              sequence: primer,
-              direction: "R",
-              originMode,
-              enteredPosition,
-              startPosition,
-              rangeStart: leftIndex + 1,
-              rangeEnd: startPosition,
-              length: primer.length,
-              tm,
-              gc: calculateGCPercent(primer)
-            });
-          }
+          return candidates;
         }
 
+        const rightEnd = startPosition;
+        for (let leftIndex = rightEnd - 2; leftIndex >= 0; leftIndex--) {
+          if (!isGC(sequence[leftIndex])) continue;
+          const primer = reverseComplement(sequence.slice(leftIndex, rightEnd));
+          candidates.push(autoPrimerCandidate({
+            primer, direction, originMode, enteredPosition, startPosition,
+            rangeStart: leftIndex + 1, rangeEnd: startPosition
+          }));
+        }
         return candidates;
       }
 
       function selectInitialAutoPrimer(candidates) {
         const inRange = candidates
           .map((candidate, index) => ({ candidate, index }))
-          .filter(({ candidate }) => candidate.tm >= 55 && candidate.tm <= 60);
+          .filter(({ candidate }) => candidate.tm >= AUTO_TM.min && candidate.tm <= AUTO_TM.max);
 
         if (inRange.length) {
           inRange.sort((a, b) => {
             const tmDifference =
-              Math.abs(a.candidate.tm - 57.5) - Math.abs(b.candidate.tm - 57.5);
+              Math.abs(a.candidate.tm - AUTO_TM.target) - Math.abs(b.candidate.tm - AUTO_TM.target);
             return tmDifference || a.candidate.length - b.candidate.length;
           });
 
@@ -2103,7 +2060,7 @@
 
         const maxTm = Math.max(...candidates.map(({ tm }) => tm));
 
-        if (maxTm < 55) {
+        if (maxTm < AUTO_TM.min) {
           return {
             index: candidates.length - 1,
             message:
@@ -2115,8 +2072,8 @@
         let bestIndex = 0;
         candidates.forEach((candidate, index) => {
           if (
-            Math.abs(candidate.tm - 57.5) <
-            Math.abs(candidates[bestIndex].tm - 57.5)
+            Math.abs(candidate.tm - AUTO_TM.target) <
+            Math.abs(candidates[bestIndex].tm - AUTO_TM.target)
           ) {
             bestIndex = index;
           }
@@ -2267,112 +2224,51 @@
       }
 
       function handleAutoPrimerDesign() {
-        const sequence =
-          cleanSequence(
-            $("autoPrimerSequence").value
-          );
-
-        const enteredPosition =
-          Number(
-            $("autoPrimerStart").value
-          );
-
+        const sequence = cleanSequence($("autoPrimerSequence").value);
+        const enteredPosition = Number($("autoPrimerStart").value);
         const originMode =
-          document.querySelector(
-            'input[name="autoPrimerOrigin"]:checked'
-          )?.value ?? "front";
-
+          document.querySelector('input[name="autoPrimerOrigin"]:checked')?.value ?? "front";
         const direction =
-          document.querySelector(
-            'input[name="autoPrimerDirection"]:checked'
-          )?.value ?? "F";
+          document.querySelector('input[name="autoPrimerDirection"]:checked')?.value ?? "F";
 
-        /*
-          選択した方向だけを更新する。
-          例：
-          F → R と設計した場合は両方残る。
-          F → F と設計した場合はFだけ置き換わる。
-        */
+        // FとRは別々に保持する。同じ方向を再設計したときだけ、その方向を更新する。
         resetAutoPrimerDirection(direction);
 
-        if (!sequence) {
-          setAutoPrimerError(
-            direction,
-            "自動設計する塩基配列を入力してください。"
-          );
-          return;
-        }
+        const sequenceError = basicDNAError(
+          sequence,
+          "自動設計する塩基配列を入力してください。"
+        );
+        if (sequenceError) return setAutoPrimerError(direction, sequenceError);
 
-        if (!isDNA(sequence)) {
-          setAutoPrimerError(
-            direction,
-            "塩基配列にはA、T、G、Cのみ使用してください。"
-          );
-          return;
+        if (!Number.isInteger(enteredPosition) || enteredPosition < 1) {
+          return setAutoPrimerError(direction, "開始位置は1以上の整数で入力してください。");
         }
-
-        if (
-          !Number.isInteger(enteredPosition) ||
-          enteredPosition < 1
-        ) {
-          setAutoPrimerError(
-            direction,
-            "開始位置は1以上の整数で入力してください。"
-          );
-          return;
-        }
-
         if (enteredPosition > sequence.length) {
-          setAutoPrimerError(
-            direction,
-            "指定した開始位置が入力配列の長さを超えています。"
-          );
-          return;
+          return setAutoPrimerError(direction, "指定した開始位置が入力配列の長さを超えています。");
         }
 
-        const startPosition =
-          resolveStartPosition(
-            sequence.length,
-            enteredPosition,
-            originMode
-          );
-
-        const state =
-          autoState[direction];
-
-        state.candidates =
-          buildAutoPrimerCandidates({
-            sequence,
-            startPosition,
-            direction,
-            originMode,
-            enteredPosition
-          });
+        const startPosition = resolveStartPosition(
+          sequence.length, enteredPosition, originMode
+        );
+        const state = autoState[direction];
+        state.candidates = buildAutoPrimerCandidates({
+          sequence, startPosition, direction, originMode, enteredPosition
+        });
 
         if (!state.candidates.length) {
-          setAutoPrimerError(
+          return setAutoPrimerError(
             direction,
             "指定した起点から、3'末端をG/CにできるPrimer候補がありません。F/R方向または開始位置を確認してください。"
           );
-          return;
         }
 
-        const selection =
-          selectInitialAutoPrimer(
-            state.candidates
-          );
-
-        state.currentIndex =
-          selection.index;
-
-        state.message =
-          selection.message;
-
-        state.messageType =
-          selection.type;
-
-        state.error = "";
-
+        const selection = selectInitialAutoPrimer(state.candidates);
+        Object.assign(state, {
+          currentIndex: selection.index,
+          message: selection.message,
+          messageType: selection.type,
+          error: ""
+        });
         renderAutoPrimer();
       }
 
@@ -2383,19 +2279,12 @@
       function handleRestrictionSiteAddition() {
         const result = $("restrictionResult");
         const sequence = cleanSequence($("restrictionSequence").value);
-
-        if (!sequence) {
-          result.innerHTML = errorHtml(
-            "制限酵素サイトを付加する塩基配列を入力してください。",
-            "margin-top: 14px;"
-          );
-          return;
-        }
-        if (!isDNA(sequence)) {
-          result.innerHTML = errorHtml(
-            "塩基配列にはA、T、G、Cのみ使用してください。",
-            "margin-top: 14px;"
-          );
+        const inputError = basicDNAError(
+          sequence,
+          "制限酵素サイトを付加する塩基配列を入力してください。"
+        );
+        if (inputError) {
+          result.innerHTML = errorHtml(inputError, "margin-top: 14px;");
           return;
         }
 
@@ -2408,17 +2297,14 @@
         result.innerHTML = `
           <div class="restriction-result-box">
             <strong>${enzymeName} siteを5'末端に付加</strong>
-
             <div class="restriction-output-row">
               <div class="restriction-output-sequence">
                 5' - <span class="restriction-site-highlight">${site}</span>${sequence} - 3'
               </div>
               ${copyButtonHtml(combinedSequence)}
             </div>
-
             <div class="restriction-meta">
-              認識配列：${site} ／
-              元配列：${sequence.length} nt ／
+              認識配列：${site} ／ 元配列：${sequence.length} nt ／
               付加後Length：${combinedSequence.length} nt
             </div>
           </div>`;
@@ -2431,13 +2317,10 @@
       function handleTmCalculation() {
         const result = $("tmResult");
         const sequence = cleanSequence($("tmSequence").value);
+        const inputError = basicDNAError(sequence, "Tmを計算する塩基配列を入力してください。");
 
-        if (!sequence) {
-          result.innerHTML = errorHtml("Tmを計算する塩基配列を入力してください。");
-          return;
-        }
-        if (!isDNA(sequence)) {
-          result.innerHTML = errorHtml("塩基配列にはA、T、G、Cのみ使用してください。");
+        if (inputError) {
+          result.innerHTML = errorHtml(inputError);
           return;
         }
         if (sequence.length < 2) {
@@ -2447,24 +2330,17 @@
           return;
         }
 
-        try {
-          const tm = calculateTm(sequence);
-          const gcPercent = calculateGCPercent(sequence);
-
-          result.innerHTML = `
-            <div class="tm-result-box">
-              <strong>Tm</strong>
-              <div class="tm-result-number">${tm.toFixed(1)} °C</div>
-              <div class="tm-result-meta">
-                GC率：<strong>${gcPercent.toFixed(1)}%</strong> ／
-                配列長：${sequence.length} nt ／
-                Primer濃度：0.5 µM ／
-                Na<sup>+</sup>：50 mM
-              </div>
-            </div>`;
-        } catch (error) {
-          result.innerHTML = errorHtml(error.message);
-        }
+        const tm = calculateTm(sequence);
+        const gcPercent = calculateGCPercent(sequence);
+        result.innerHTML = `
+          <div class="tm-result-box">
+            <strong>Tm</strong>
+            <div class="tm-result-number">${tm.toFixed(1)} °C</div>
+            <div class="tm-result-meta">
+              GC率：<strong>${gcPercent.toFixed(1)}%</strong> ／
+              配列長：${sequence.length} nt ／ Primer濃度：0.5 µM ／ Na<sup>+</sup>：50 mM
+            </div>
+          </div>`;
       }
 
       /* ======================================================
@@ -2474,23 +2350,20 @@
       function handleReverseComplement() {
         const result = $("complementResult");
         const sequence = cleanSequence($("complementSequence").value);
-
-        if (!sequence) {
-          result.innerHTML = errorHtml("逆向き相補鎖に変換する塩基配列を入力してください。");
-          return;
-        }
-        if (!isDNA(sequence)) {
-          result.innerHTML = errorHtml("塩基配列にはA、T、G、Cのみ使用してください。");
+        const inputError = basicDNAError(
+          sequence,
+          "逆向き相補鎖に変換する塩基配列を入力してください。"
+        );
+        if (inputError) {
+          result.innerHTML = errorHtml(inputError);
           return;
         }
 
         const converted = reverseComplement(sequence);
-
         result.innerHTML = `
           <div class="complement-result-box">
             <div class="complement-label">入力（5'→3'）</div>
             <div class="complement-sequence-output">5' - ${sequence} - 3'</div>
-
             <div class="complement-label" style="margin-top: 14px;">
               逆向き相補鎖（5'→3'）
             </div>
@@ -2540,29 +2413,24 @@
       });
 
       document.addEventListener("click", (event) => {
+        // 開いている注意ポップアップは、外側をクリックしたら閉じる。
+        document.querySelectorAll(".notice-details[open]").forEach((details) => {
+          if (!details.contains(event.target)) details.removeAttribute("open");
+        });
+
         const copyButton = event.target.closest("[data-copy]");
         if (copyButton) {
           copySequence(copyButton.dataset.copy, copyButton);
           return;
         }
 
-        const adjustButton =
-          event.target.closest(
-            '[data-action="adjust-primer"]'
-          );
-
+        const adjustButton = event.target.closest('[data-action="adjust-primer"]');
         if (adjustButton) {
-          handlePrimerAdjustment(
-            adjustButton
-          );
+          handlePrimerAdjustment(adjustButton);
           return;
         }
 
-        const autoStepButton =
-          event.target.closest(
-            '[data-action="auto-step"]'
-          );
-
+        const autoStepButton = event.target.closest('[data-action="auto-step"]');
         if (autoStepButton) {
           stepAutoPrimer(
             autoStepButton.dataset.direction,
@@ -2571,17 +2439,6 @@
         }
       });
     })();
-  
-      /* 注意ポップアップ：外側をクリックしたら閉じる */
-      document.addEventListener("click", function (event) {
-        document
-          .querySelectorAll(".notice-details[open]")
-          .forEach(function (details) {
-            if (!details.contains(event.target)) {
-              details.removeAttribute("open");
-            }
-          });
-      });
 
 </script>
 </body>
