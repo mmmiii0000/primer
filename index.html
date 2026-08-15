@@ -1370,12 +1370,39 @@
 
       function codingSequenceWarnings(sequence) {
         const warnings = [];
+
         if (sequence.slice(0, 3) !== "ATG") {
-          warnings.push("最初が開始コドン（ATG）ではありません。");
+          warnings.push(
+            "最初が開始コドン（ATG）ではありません。"
+          );
         }
-        if (!STOP_CODONS.has(sequence.slice(-3))) {
-          warnings.push("最後が終止コドン（TAA / TAG / TGA）ではありません。");
+
+        const remainder =
+          sequence.length % 3;
+
+        if (remainder !== 0) {
+          warnings.push(
+            `配列長が3の倍数ではありません。末尾の${remainder}塩基はコドンとして読めません。`
+          );
         }
+
+        const readableLength =
+          sequence.length - remainder;
+
+        const lastCompleteCodon =
+          readableLength >= 3
+            ? sequence.slice(
+                readableLength - 3,
+                readableLength
+              )
+            : "";
+
+        if (!STOP_CODONS.has(lastCompleteCodon)) {
+          warnings.push(
+            "最後に読めるコドンが終止コドン（TAA / TAG / TGA）ではありません。"
+          );
+        }
+
         return warnings;
       }
 
@@ -1878,7 +1905,6 @@
 
         if (!sequence) return fail("塩基配列を入力してください。");
         if (!isDNA(sequence)) return fail(DNA_ERROR);
-        if (sequence.length % 3 !== 0) return fail("塩基配列の長さが3の倍数ではありません。");
         if (!Number.isInteger(position) || position < 1) return fail("残基番号を正しく入力してください。");
         if (originalAA && !AA_TO_CODONS[originalAA]) return fail("元のアミノ酸を1文字表記で入力してください。");
         if (!AA_TO_CODONS[mutantAA]) return fail("変異後のアミノ酸を1文字表記で入力してください。");
