@@ -1359,16 +1359,6 @@
 
   </div>
 
-  <h2>タンパク質名を入力（任意）</h2>
-  <input
-    type="text"
-    id="proteinName"
-    class="protein-name-input"
-    placeholder="例：XxxA"
-    autocomplete="off"
-  >
-
-
    <p class="sequence-note"><br>
         Primer F：変異コドンに加えて、5'側6塩基と、選択した条件に基づく3'側配列を含めたプライマーを作成します。<br>
         Primer R：Primer Fと同様の操作を、相補鎖（reverse complement）に対して行います。<br>
@@ -1376,6 +1366,18 @@
         Length：<strong>プライマー全長 / 変異コドンより3'側</strong>の塩基数を表示します。<br>
         Codon Usage：大腸菌の値を用いています。
     </p>
+
+  <h2>タンパク質名を入力（任意）</h2>
+  <p class="sequence-note">
+    タンパク質名を入力すると、注文用コピー時のPrimer名にタンパク質名を含めることができます。
+  </p>
+  <input
+    type="text"
+    id="proteinName"
+    class="protein-name-input"
+    placeholder="例：XxxA"
+    autocomplete="off"
+  >
 
   <button id="designButton">
     プライマーを設計
