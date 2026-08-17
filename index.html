@@ -160,17 +160,24 @@
     }
 
     .mutation-row {
-      display: grid;
-      grid-template-columns: 100px auto 72px auto 72px auto;
+      display: flex;
+      align-items: center;
       justify-content: center;
       gap: 20px;
-      align-items: center;
       margin-top: 10px;
       padding: 16px 18px;
       background: var(--surface-soft);
       border: 1px solid var(--line);
       border-radius: var(--radius-md);
       font-size: 16px;
+    }
+
+    .mutation-main {
+      display: inline-grid;
+      grid-template-columns: 100px auto 72px auto 72px auto;
+      align-items: center;
+      gap: 20px;
+      white-space: nowrap;
     }
 
     .position-input,
@@ -193,6 +200,70 @@
     #originalAA {
       background: #f3f6fb;
       color: var(--text);
+    }
+
+
+    .mutation-primer-setting {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .mutation-setting-label,
+    .mutation-target-unit {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .mutation-primer-mode {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px;
+      background: #eef2f7;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+    }
+
+    .mutation-primer-mode input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .mutation-primer-mode label {
+      min-width: 46px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.2;
+      text-align: center;
+      cursor: pointer;
+      transition:
+        color 0.15s ease,
+        background-color 0.15s ease,
+        box-shadow 0.15s ease;
+    }
+
+    .mutation-primer-mode input:checked + label {
+      color: #ffffff;
+      background: var(--primary);
+      box-shadow: 0 3px 8px rgba(49, 87, 213, 0.22);
+    }
+
+    .mutation-target-input {
+      width: 62px;
+      height: 38px;
+      padding: 0 7px;
+      border-radius: 8px;
+      background: #ffffff;
+      font-size: 14px;
+      font-weight: 800;
+      text-align: center;
     }
 
     button {
@@ -341,9 +412,52 @@
 
     .tm-value {
       min-width: 0;
-      font-weight: 800;
-      white-space: nowrap;
       text-align: center;
+      white-space: normal;
+    }
+
+    .tm-header {
+      line-height: 1.25;
+      white-space: normal !important;
+    }
+
+    .tm-header span {
+      display: block;
+    }
+
+    .tm-header span:nth-child(2),
+    .tm-header span:nth-child(3) {
+      margin-top: 3px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    .tm-header span:nth-child(2) {
+      white-space: nowrap;
+    }
+
+    .tm-metrics {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      line-height: 1.25;
+    }
+
+    .tm-metrics-main {
+      margin-bottom: 4px;
+      font-size: 13px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .tm-metrics-sub {
+      color: var(--muted);
+      font-size: 9.5px;
+      font-weight: 700;
+      white-space: nowrap;
     }
 
     .mutation-codon {
@@ -768,12 +882,26 @@
       }
 
       .mutation-row {
-        grid-template-columns: 1fr;
-        gap: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
       }
 
-      .mutation-row span {
+      .mutation-main {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+        gap: 8px;
+        white-space: normal;
+      }
+
+      .mutation-main span {
         text-align: center;
+      }
+
+      .mutation-primer-setting {
+        justify-content: center;
+        flex-wrap: wrap;
       }
 
       #result table {
@@ -976,6 +1104,30 @@
       }
     }
 
+  
+    @media (max-width: 980px) and (min-width: 761px) {
+      .mutation-row {
+        flex-wrap: wrap;
+        row-gap: 12px;
+      }
+
+      .mutation-main,
+      .mutation-primer-setting {
+        flex: 0 0 auto;
+      }
+    }
+
+  
+    @media (max-width: 760px) {
+      .tm-metrics-main {
+        font-size: 11px;
+      }
+
+      .tm-metrics-sub {
+        font-size: 7.5px;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -1000,45 +1152,70 @@
   <!-- 変異 -->
   <div class="mutation-row">
 
-    <input
-      type="number"
-      id="position"
-      class="position-input"
-      min="1"
-      placeholder="50"
-    >
+    <div class="mutation-main">
+      <input
+        type="number"
+        id="position"
+        class="position-input"
+        min="1"
+        placeholder="50"
+      >
 
-    <span>番目の</span>
+      <span>番目の</span>
 
-    <input
-      type="text"
-      id="originalAA"
-      class="aa-input"
-      maxlength="1"
-      placeholder="自動"
-    >
+      <input
+        type="text"
+        id="originalAA"
+        class="aa-input"
+        maxlength="1"
+        placeholder="自動"
+      >
 
-    <span>残基を</span>
+      <span>残基を</span>
 
-    <input
-      type="text"
-      id="mutantAA"
-      class="aa-input"
-      maxlength="1"
-      placeholder="G"
-    >
+      <input
+        type="text"
+        id="mutantAA"
+        class="aa-input"
+        maxlength="1"
+        placeholder="G"
+      >
 
-    <span>に変換する。</span>
+      <span>に変換する。</span>
+    </div>
 
-    
+    <div class="mutation-primer-setting">
+      <span class="mutation-setting-label">3'側：</span>
+
+      <div class="mutation-primer-mode" aria-label="3'側の設計基準">
+        <input type="radio" id="mutationPrimerModeBases" name="mutationPrimerMode" value="bases" checked>
+        <label for="mutationPrimerModeBases">塩基数</label>
+
+        <input type="radio" id="mutationPrimerModeTm" name="mutationPrimerMode" value="tm">
+        <label for="mutationPrimerModeTm">Tm</label>
+      </div>
+
+      <input
+        type="number"
+        id="mutationPrimerTarget"
+        class="mutation-target-input"
+        min="1"
+        step="1"
+        value="18"
+      >
+
+      <span id="mutationPrimerTargetUnit" class="mutation-target-unit">塩基</span>
+    </div>
+
   </div>
 
 
 
    <p class="sequence-note"><br>
-        Primer F：変異コドンに加えて、5'側6塩基と3'側18塩基を含めたプライマーを作成します。3'末端がA/Tの場合は、最も近いG/Cまで3'方向に延長します。<br>
+        Primer F：変異コドンに加えて、5'側6塩基と、選択した条件に基づく3'側配列を含めたプライマーを作成します。塩基数では指定値以上で最も近いG/C終端、Tmでは指定値に最も近いG/C終端を選択します。<br>
         Primer R：Primer Fと同様の操作を、相補鎖（reverse complement）に対して行います。<br>
         Tm：最近接塩基対法で計算します（Primer濃度 0.5 µM、Na<sup>+</sup> 50 mM）。Primer F / Rともに、<strong>変異コドン自体は含めず、変異コドンより3'側の配列のみ</strong>をTm計算に使用します。<br>
+        Length：<strong>プライマー全長 / 変異コドンより3'側の塩基数</strong>を表示します。<br>
         Codon Usage：大腸菌の値を用いています。
     </p>
 
@@ -1486,49 +1663,121 @@
         variantCounts: new Map()
       };
 
-      function extendForwardEnd(sequence, end) {
-        while (end < sequence.length && !isGC(sequence[end - 1])) {
-          end++;
+      function buildForward3PrimeCandidates(sequence, mutationEnd) {
+        const candidates = [];
+
+        for (let end = mutationEnd + 1; end <= sequence.length; end++) {
+          if (!isGC(sequence[end - 1])) continue;
+
+          const threePrimeSequence =
+            sequence.slice(mutationEnd, end);
+
+          candidates.push({
+            coordinate: end,
+            length: threePrimeSequence.length,
+            tm: calculateTmSafe(threePrimeSequence)
+          });
         }
-        return end;
+
+        return candidates;
       }
 
-      function extendReverseStart(sequence, start) {
-        while (start > 0 && !isGC(sequence[start])) {
-          start--;
+      function buildReverse3PrimeCandidates(sequence, codonStart) {
+        const candidates = [];
+
+        for (let start = codonStart - 1; start >= 0; start--) {
+          if (!isGC(sequence[start])) continue;
+
+          const threePrimeSequence =
+            reverseComplement(
+              sequence.slice(start, codonStart)
+            );
+
+          candidates.push({
+            coordinate: start,
+            length: threePrimeSequence.length,
+            tm: calculateTmSafe(threePrimeSequence)
+          });
         }
-        return start;
+
+        return candidates;
       }
 
-      function findLongestForwardGCEnd(sequence, mutationEnd) {
-        let end = sequence.length;
-        while (end > mutationEnd && !isGC(sequence[end - 1])) {
-          end--;
+      function selectMutation3PrimeCandidate(candidates, setting) {
+        if (!candidates.length) return null;
+
+        if (setting.mode === "bases") {
+          return (
+            candidates.find(
+              ({ length }) => length >= setting.target
+            ) ??
+            candidates[candidates.length - 1]
+          );
         }
-        return end > mutationEnd ? end : null;
+
+        const tmCandidates =
+          candidates.filter(
+            ({ tm }) => tm !== null
+          );
+
+        if (!tmCandidates.length) {
+          return candidates[candidates.length - 1];
+        }
+
+        return tmCandidates.reduce((best, candidate) => {
+          const bestDifference =
+            Math.abs(best.tm - setting.target);
+
+          const candidateDifference =
+            Math.abs(candidate.tm - setting.target);
+
+          if (candidateDifference < bestDifference) {
+            return candidate;
+          }
+
+          if (
+            candidateDifference === bestDifference &&
+            candidate.length < best.length
+          ) {
+            return candidate;
+          }
+
+          return best;
+        });
       }
 
-      function findLongestReverseGCStart(sequence, codonStart) {
-        for (let start = 0; start < codonStart; start++) {
-          if (isGC(sequence[start])) return start;
-        }
-        return null;
+      function mutationSettingLabel(setting) {
+        return setting.mode === "bases"
+          ? `${setting.target}塩基`
+          : `${setting.target}℃`;
       }
 
-      function createPrimerPair(originalSequence, codonStart, mutantCodon) {
+      function createPrimerPair(
+        originalSequence,
+        codonStart,
+        mutantCodon,
+        setting
+      ) {
         const warnings = [];
+
         const mutatedSequence =
           originalSequence.slice(0, codonStart) +
           mutantCodon +
           originalSequence.slice(codonStart + 3);
 
-        const mutationEnd = codonStart + 3;
+        const mutationEnd =
+          codonStart + 3;
 
-        // Forward: 6 bases upstream + mutation + 18 bases downstream
-        const desiredForwardStart = codonStart - 6;
-        const desiredForwardEnd = mutationEnd + 18;
-        const forwardStart = Math.max(0, desiredForwardStart);
-        let forwardEnd = Math.min(mutatedSequence.length, desiredForwardEnd);
+        /*
+          Primer F:
+          5'側は従来どおり6塩基。
+          3'側は、指定した塩基数またはTmに従ってG/C終端候補を選ぶ。
+        */
+        const desiredForwardStart =
+          codonStart - 6;
+
+        const forwardStart =
+          Math.max(0, desiredForwardStart);
 
         if (desiredForwardStart < 0) {
           warnings.push(
@@ -1536,52 +1785,139 @@
           );
         }
 
-        if (desiredForwardEnd > mutatedSequence.length) {
-          const gcEnd = findLongestForwardGCEnd(mutatedSequence, mutationEnd);
-          forwardEnd = gcEnd ?? mutatedSequence.length;
+        const forwardCandidates =
+          buildForward3PrimeCandidates(
+            mutatedSequence,
+            mutationEnd
+          );
+
+        const selectedForward =
+          selectMutation3PrimeCandidate(
+            forwardCandidates,
+            setting
+          );
+
+        let forwardEnd;
+
+        if (selectedForward) {
+          forwardEnd =
+            selectedForward.coordinate;
+
+          if (
+            setting.mode === "bases" &&
+            selectedForward.length < setting.target
+          ) {
+            warnings.push(
+              `Primer F：3'側${mutationSettingLabel(setting)}を確保できないため、取得可能なG/C終端候補のうち最長の配列で作成しています。`
+            );
+          }
+
+          if (
+            setting.mode === "tm" &&
+            selectedForward.tm === null
+          ) {
+            warnings.push(
+              "Primer F：3'側でTmを計算できる2塩基以上のG/C終端候補がないため、取得可能な範囲で作成しています。"
+            );
+          }
+        } else {
+          forwardEnd =
+            mutatedSequence.length;
 
           warnings.push(
-            gcEnd
-              ? "Primer F：変異コドンの3'側18塩基を確保できないため、取得可能な範囲で最も長く、3'末端がG/Cになる位置までで作成しています。"
-              : "Primer F：変異コドンの3'側18塩基を確保できず、利用可能な3'側領域にG/C終端位置もないため、配列末端までで作成しています。"
+            "Primer F：利用可能な3'側領域にG/C終端位置がないため、配列末端までで作成しています。"
           );
-        } else {
-          forwardEnd = extendForwardEnd(mutatedSequence, forwardEnd);
         }
 
-        const primerF = mutatedSequence.slice(forwardStart, forwardEnd);
-        const mutationStartF = codonStart - forwardStart;
-
-        // Reverse: 18 bases upstream + mutation + 6 bases downstream, then RC
-        const desiredReverseStart = codonStart - 18;
-        const desiredReverseEnd = mutationEnd + 6;
-        let reverseStart = Math.max(0, desiredReverseStart);
-        const reverseEnd = Math.min(mutatedSequence.length, desiredReverseEnd);
-
-        if (desiredReverseStart < 0) {
-          const gcStart = findLongestReverseGCStart(mutatedSequence, codonStart);
-          reverseStart = gcStart ?? 0;
-
-          warnings.push(
-            gcStart !== null
-              ? "Primer R：変異コドンの18塩基側を確保できないため、取得可能な範囲で最も長く、Primerの3'末端がG/Cになる位置までで作成しています。"
-              : "Primer R：変異コドンの18塩基側を確保できず、利用可能な領域にG/C終端位置もないため、配列の5'末端までで作成しています。"
+        const primerF =
+          mutatedSequence.slice(
+            forwardStart,
+            forwardEnd
           );
-        } else {
-          reverseStart = extendReverseStart(mutatedSequence, reverseStart);
-        }
+
+        const mutationStartF =
+          codonStart - forwardStart;
+
+        /*
+          Primer R:
+          reverse complement後の5'側は従来どおり6塩基。
+          Primerの3'側に相当するcoding strand上流側から候補を選ぶ。
+        */
+        const desiredReverseEnd =
+          mutationEnd + 6;
+
+        const reverseEnd =
+          Math.min(
+            mutatedSequence.length,
+            desiredReverseEnd
+          );
 
         if (desiredReverseEnd > mutatedSequence.length) {
           warnings.push(
-            "Primer R：変異コドンの3'側6塩基を確保できないため、配列の3'末端までで作成しています。"
+            "Primer R：変異コドンの5'側6塩基を確保できないため、配列の3'末端までで作成しています。"
           );
         }
 
-        const reverseTemplate = mutatedSequence.slice(reverseStart, reverseEnd);
-        const primerR = reverseComplement(reverseTemplate);
-        const mutationOffsetInTemplate = codonStart - reverseStart;
+        const reverseCandidates =
+          buildReverse3PrimeCandidates(
+            mutatedSequence,
+            codonStart
+          );
+
+        const selectedReverse =
+          selectMutation3PrimeCandidate(
+            reverseCandidates,
+            setting
+          );
+
+        let reverseStart;
+
+        if (selectedReverse) {
+          reverseStart =
+            selectedReverse.coordinate;
+
+          if (
+            setting.mode === "bases" &&
+            selectedReverse.length < setting.target
+          ) {
+            warnings.push(
+              `Primer R：3'側${mutationSettingLabel(setting)}を確保できないため、取得可能なG/C終端候補のうち最長の配列で作成しています。`
+            );
+          }
+
+          if (
+            setting.mode === "tm" &&
+            selectedReverse.tm === null
+          ) {
+            warnings.push(
+              "Primer R：3'側でTmを計算できる2塩基以上のG/C終端候補がないため、取得可能な範囲で作成しています。"
+            );
+          }
+        } else {
+          reverseStart = 0;
+
+          warnings.push(
+            "Primer R：利用可能な3'側領域にG/C終端位置がないため、配列の5'末端までで作成しています。"
+          );
+        }
+
+        const reverseTemplate =
+          mutatedSequence.slice(
+            reverseStart,
+            reverseEnd
+          );
+
+        const primerR =
+          reverseComplement(
+            reverseTemplate
+          );
+
+        const mutationOffsetInTemplate =
+          codonStart - reverseStart;
+
         const mutationStartR =
-          reverseTemplate.length - (mutationOffsetInTemplate + 3);
+          reverseTemplate.length -
+          (mutationOffsetInTemplate + 3);
 
         return {
           primerF,
@@ -1609,7 +1945,33 @@
       }
 
       function primerTm(primer, mutationStart) {
-        return calculateTmSafe(primer.slice(mutationStart + 3));
+        return calculateTmSafe(
+          primer.slice(mutationStart + 3)
+        );
+      }
+
+      function primerMetricsHtml(primer, mutationStart) {
+        const threePrimeSequence =
+          primer.slice(mutationStart + 3);
+
+        const tm =
+          calculateTmSafe(threePrimeSequence);
+
+        const gc =
+          calculateGCPercent(primer);
+
+        return `
+          <div class="tm-metrics">
+            <div class="tm-metrics-main">
+              ${tm === null ? "N/A" : tm.toFixed(1)}
+            </div>
+            <div class="tm-metrics-sub">
+              ${primer.length} / ${threePrimeSequence.length} nt
+            </div>
+            <div class="tm-metrics-sub">
+              ${gc.toFixed(1)}%
+            </div>
+          </div>`;
       }
 
       function warningDetailsHtml(message, ariaLabel = "注意事項を表示") {
@@ -1663,9 +2025,6 @@
       }
 
       function mutationRowHtml(data, extended = false) {
-        const tmF = primerTm(data.primerF, data.mutationStartF);
-        const tmR = primerTm(data.primerR, data.mutationStartR);
-
         return `
           <tr
             ${extended ? 'class="extended-row"' : ""}
@@ -1679,11 +2038,11 @@
             <td class="sequence primer-sequence-cell">
               ${primerCellHtml(data.primerF, data.mutationStartF, data.rowId, "F")}
             </td>
-            <td class="tm-value">${tmF === null ? "N/A" : tmF.toFixed(1)}</td>
+            <td class="tm-value">${primerMetricsHtml(data.primerF, data.mutationStartF)}</td>
             <td class="sequence primer-sequence-cell">
               ${primerCellHtml(data.primerR, data.mutationStartR, data.rowId, "R")}
             </td>
-            <td class="tm-value">${tmR === null ? "N/A" : tmR.toFixed(1)}</td>
+            <td class="tm-value">${primerMetricsHtml(data.primerR, data.mutationStartR)}</td>
           </tr>`;
       }
 
@@ -1888,12 +2247,87 @@
           : "";
       }
 
+      const mutationPrimerTargets = {
+        bases: 18,
+        tm: 58
+      };
+
+      function currentMutationPrimerMode() {
+        return (
+          document.querySelector(
+            'input[name="mutationPrimerMode"]:checked'
+          )?.value ?? "bases"
+        );
+      }
+
+      function syncMutationPrimerTargetControl() {
+        const mode =
+          currentMutationPrimerMode();
+
+        const input =
+          $("mutationPrimerTarget");
+
+        input.value =
+          mutationPrimerTargets[mode];
+
+        input.min =
+          mode === "bases"
+            ? "1"
+            : "0";
+
+        input.step =
+          mode === "bases"
+            ? "1"
+            : "0.5";
+
+        $("mutationPrimerTargetUnit").textContent =
+          mode === "bases"
+            ? "塩基"
+            : "℃";
+      }
+
+      function readMutationPrimerSetting() {
+        const mode =
+          currentMutationPrimerMode();
+
+        const target =
+          Number(
+            $("mutationPrimerTarget").value
+          );
+
+        if (
+          mode === "bases" &&
+          (!Number.isInteger(target) || target < 1)
+        ) {
+          return {
+            error:
+              "3'側の塩基数は1以上の整数で入力してください。"
+          };
+        }
+
+        if (
+          mode === "tm" &&
+          (!Number.isFinite(target) || target < 0)
+        ) {
+          return {
+            error:
+              "3'側のTmは0以上の数値で入力してください。"
+          };
+        }
+
+        return {
+          mode,
+          target
+        };
+      }
+
       function handleMutationDesign() {
         const result = $("result");
         const sequence = cleanSequence($("sequence").value);
         const position = Number($("position").value);
         const originalAA = $("originalAA").value.trim().toUpperCase();
         const mutantAA = $("mutantAA").value.trim().toUpperCase();
+        const primerSetting = readMutationPrimerSetting();
 
         result.innerHTML = "";
         mutationState.rows.clear();
@@ -1908,6 +2342,7 @@
         if (!Number.isInteger(position) || position < 1) return fail("残基番号を正しく入力してください。");
         if (originalAA && !AA_TO_CODONS[originalAA]) return fail("元のアミノ酸を1文字表記で入力してください。");
         if (!AA_TO_CODONS[mutantAA]) return fail("変異後のアミノ酸を1文字表記で入力してください。");
+        if (primerSetting.error) return fail(primerSetting.error);
 
         const codonStart = getCodonStart(position);
         if (codonStart + 3 > sequence.length) {
@@ -1931,7 +2366,7 @@
         const rows = [];
 
         candidateCodons.forEach((mutantCodon, index) => {
-          const pair = createPrimerPair(sequence, codonStart, mutantCodon);
+          const pair = createPrimerPair(sequence, codonStart, mutantCodon, primerSetting);
           pair.warnings.forEach((warning) => warnings.add(warning));
 
           const rootNo = index + 1;
@@ -1987,9 +2422,17 @@
                 <th class="compact-header">Codon<br>usage</th>
                 <th class="compact-header">塩基<br>置換数</th>
                 <th>Primer F (5'→3')</th>
-                <th>Tm (°C)</th>
+                <th class="tm-header">
+                  <span>Tm (℃)</span>
+                  <span>Length</span>
+                  <span>GC率</span>
+                </th>
                 <th>Primer R (5'→3')</th>
-                <th>Tm (°C)</th>
+                <th class="tm-header">
+                  <span>Tm (℃)</span>
+                  <span>Length</span>
+                  <span>GC率</span>
+                </th>
               </tr>
             </thead>
             <tbody>${rows.join("")}</tbody>
@@ -2431,6 +2874,28 @@
 
       $("position").addEventListener("input", updateOriginalAA);
       $("sequence").addEventListener("input", updateOriginalAA);
+
+      document
+        .querySelectorAll('input[name="mutationPrimerMode"]')
+        .forEach((radio) => {
+          radio.addEventListener("change", syncMutationPrimerTargetControl);
+        });
+
+      $("mutationPrimerTarget").addEventListener("input", () => {
+        const mode =
+          currentMutationPrimerMode();
+
+        const value =
+          Number(
+            $("mutationPrimerTarget").value
+          );
+
+        if (Number.isFinite(value)) {
+          mutationPrimerTargets[mode] = value;
+        }
+      });
+
+      syncMutationPrimerTargetControl();
 
       COUNTED_INPUTS.forEach((inputId) => {
         $(inputId).addEventListener("input", () => updateCharacterCount(inputId));
