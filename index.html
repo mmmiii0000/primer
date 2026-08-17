@@ -580,6 +580,9 @@
     .auto-primer-direction {
       margin-left: 8px;
     }
+    .auto-primer-setting {
+      margin-left: 60px;
+    }
     .auto-primer-origin input,
     .auto-primer-direction input {
       position: absolute;
@@ -920,7 +923,8 @@
       .restriction-controls {
         grid-template-columns: 1fr;
       }
-      .auto-primer-direction {
+      .auto-primer-direction,
+      .auto-primer-setting {
         margin-left: 0;
       }
     }
@@ -1144,9 +1148,8 @@
   <div class="auto-primer-section">
     <h2 class="section-title">自動プライマー設計</h2>
     <p class="sequence-note">
-      「前から」または「後ろから」で開始位置を指定し、その塩基を起点として、3'末端がG/CでTmが55〜60℃になるPrimerを自動で選択します。<br>
-      Fを選択すると入力配列に沿ったForward primerを、Rを選択すると入力配列に対するReverse primerを、指定した塩基を起点に5'→3'で設計します。<br>
-      候補が複数ある場合は57.5℃に最も近いものを表示します。
+      「前から」または「後ろから」で開始位置を指定し、その塩基を起点として、選択した条件に基づき、3'末端がG/CのPrimerを自動で設計します。<br>
+      Fを選択すると入力配列に沿ったForward primerを、Rを選択すると入力配列に対するReverse primerを、指定した塩基を起点に5'→3'で設計します。
     </p>
     <div class="auto-primer-start-row">
       <div class="auto-primer-origin" aria-label="開始位置の数え方">
@@ -1162,6 +1165,23 @@
         <label for="autoPrimerDirectionF">F</label>
         <input type="radio" id="autoPrimerDirectionR" name="autoPrimerDirection" value="R" >
         <label for="autoPrimerDirectionR">R</label>
+      </div>
+      <div class="mutation-primer-setting auto-primer-setting">
+        <div class="mutation-primer-mode" aria-label="自動Primerの設計基準">
+          <input type="radio" id="autoPrimerModeBases" name="autoPrimerMode" value="bases" >
+          <label for="autoPrimerModeBases">塩基数</label>
+          <input type="radio" id="autoPrimerModeTm" name="autoPrimerMode" value="tm" checked >
+          <label for="autoPrimerModeTm">Tm</label>
+        </div>
+        <input
+          type="number"
+          id="autoPrimerTarget"
+          class="mutation-target-input"
+          min="0"
+          step="0.5"
+          value="58"
+        >
+        <span id="autoPrimerTargetUnit" class="mutation-target-unit">℃</span>
       </div>
     </div>
     <div class="input-with-count">    <textarea
@@ -1339,7 +1359,6 @@
       const DNA_ERROR = "塩基配列にはA、T、G、Cのみ使用してください。";
       const COMPLEMENT = { A: "T", T: "A", G: "C", C: "G" };
       const STOP_CODONS = new Set(["TAA", "TAG", "TGA"]);
-      const AUTO_TM = { min: 55, max: 60, target: 57.5 };
       const AA_TO_CODONS = Object.entries(CODON_TABLE).reduce((map, [codon, aa]) => {
         (map[aa] ??= []).push(codon);
         return map;
@@ -2172,6 +2191,49 @@
         F: createAutoPrimerState(),
         R: createAutoPrimerState()
       };
+      const autoPrimerTargets = {
+        bases: 18,
+        tm: 58
+      };
+      function currentAutoPrimerMode() {
+        return (
+          document.querySelector(
+            'input[name="autoPrimerMode"]:checked'
+          )?.value ?? "tm"
+        );
+      }
+      function syncAutoPrimerTargetControl() {
+        const mode = currentAutoPrimerMode();
+        const input = $("autoPrimerTarget");
+        input.value = autoPrimerTargets[mode];
+        input.min = mode === "bases" ? "1" : "0";
+        input.step = mode === "bases" ? "1" : "0.5";
+        $("autoPrimerTargetUnit").textContent =
+          mode === "bases" ? "塩基" : "℃";
+      }
+      function readAutoPrimerSetting() {
+        const mode = currentAutoPrimerMode();
+        const target = Number($("autoPrimerTarget").value);
+        if (
+          mode === "bases" &&
+          (!Number.isInteger(target) || target < 1)
+        ) {
+          return {
+            error:
+              "Primerの塩基数は1以上の整数で入力してください。"
+          };
+        }
+        if (
+          mode === "tm" &&
+          (!Number.isFinite(target) || target < 0)
+        ) {
+          return {
+            error:
+              "PrimerのTmは0以上の数値で入力してください。"
+          };
+        }
+        return { mode, target };
+      }
       function resolveStartPosition(sequenceLength, enteredPosition, originMode) {
         return originMode === "back"
           ? sequenceLength - enteredPosition + 1
@@ -2220,41 +2282,50 @@
         }
         return candidates;
       }
-      function selectInitialAutoPrimer(candidates) {
-        const inRange = candidates
-          .map((candidate, index) => ({ candidate, index }))
-          .filter(({ candidate }) => candidate.tm >= AUTO_TM.min && candidate.tm <= AUTO_TM.max);
-        if (inRange.length) {
-          inRange.sort((a, b) => {
-            const tmDifference =
-              Math.abs(a.candidate.tm - AUTO_TM.target) - Math.abs(b.candidate.tm - AUTO_TM.target);
-            return tmDifference || a.candidate.length - b.candidate.length;
-          });
-          return { index: inRange[0].index, message: "", type: "" };
-        }
-        const maxTm = Math.max(...candidates.map(({ tm }) => tm));
-        if (maxTm < AUTO_TM.min) {
+      function selectAutoPrimerCandidate(candidates, setting) {
+        if (setting.mode === "bases") {
+          const index = candidates.findIndex(
+            ({ length }) => length >= setting.target
+          );
+
+          if (index >= 0) {
+            return {
+              index,
+              message: "",
+              type: ""
+            };
+          }
+
           return {
             index: candidates.length - 1,
             message:
-              "入力配列が短く、Tm 55℃以上のPrimerを作成できません。G/C終端で取得できる最長の配列を表示しています。",
-            type: "error"
+              `指定した${setting.target}塩基以上のG/C終端Primerを作成できないため、取得できる最長の候補を表示しています。`,
+            type: "warning"
           };
         }
+
         let bestIndex = 0;
         candidates.forEach((candidate, index) => {
+          const difference =
+            Math.abs(candidate.tm - setting.target);
+          const bestDifference =
+            Math.abs(candidates[bestIndex].tm - setting.target);
+
           if (
-            Math.abs(candidate.tm - AUTO_TM.target) <
-            Math.abs(candidates[bestIndex].tm - AUTO_TM.target)
+            difference < bestDifference ||
+            (
+              difference === bestDifference &&
+              candidate.length < candidates[bestIndex].length
+            )
           ) {
             bestIndex = index;
           }
         });
+
         return {
           index: bestIndex,
-          message:
-            "Tm 55〜60℃に入るG/C終端の候補がありません。57.5℃に最も近い候補を表示しています。",
-          type: "warning"
+          message: "",
+          type: ""
         };
       }
       function renderAutoPrimerSlot(direction) {
@@ -2387,6 +2458,7 @@
         const enteredPosition = Number($("autoPrimerStart").value);
         const originMode = document.querySelector('input[name="autoPrimerOrigin"]:checked')?.value ?? "front";
         const direction = document.querySelector('input[name="autoPrimerDirection"]:checked')?.value ?? "F";
+        const primerSetting = readAutoPrimerSetting();
         // FとRは別々に保持する。同じ方向を再設計したときだけ、その方向を更新する。
         resetAutoPrimerDirection(direction);
         const sequenceError = basicDNAError(
@@ -2394,6 +2466,9 @@
           "自動設計する塩基配列を入力してください。"
         );
         if (sequenceError) return setAutoPrimerError(direction, sequenceError);
+        if (primerSetting.error) {
+          return setAutoPrimerError(direction, primerSetting.error);
+        }
         if (!Number.isInteger(enteredPosition) || enteredPosition < 1) {
           return setAutoPrimerError(direction, "開始位置は1以上の整数で入力してください。");
         }
@@ -2413,7 +2488,10 @@
             "指定した起点から、3'末端をG/CにできるPrimer候補がありません。F/R方向または開始位置を確認してください。"
           );
         }
-        const selection = selectInitialAutoPrimer(state.candidates);
+        const selection = selectAutoPrimerCandidate(
+          state.candidates,
+          primerSetting
+        );
         Object.assign(state, {
           currentIndex: selection.index,
           message: selection.message,
@@ -2586,7 +2664,20 @@
           mutationPrimerTargets[mode] = value;
         }
       });
+      document
+        .querySelectorAll('input[name="autoPrimerMode"]')
+        .forEach((radio) => {
+          radio.addEventListener("change", syncAutoPrimerTargetControl);
+        });
+      $("autoPrimerTarget").addEventListener("input", () => {
+        const mode = currentAutoPrimerMode();
+        const value = Number($("autoPrimerTarget").value);
+        if (Number.isFinite(value)) {
+          autoPrimerTargets[mode] = value;
+        }
+      });
       syncMutationPrimerTargetControl();
+      syncAutoPrimerTargetControl();
       COUNTED_INPUTS.forEach((inputId) => {
         $(inputId).addEventListener("input", () => updateCharacterCount(inputId));
         updateCharacterCount(inputId);
