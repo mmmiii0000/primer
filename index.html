@@ -628,9 +628,18 @@
       font-weight: 700;
       letter-spacing: 0.01em;
     }
-    .auto-restriction-note,
     .auto-restriction-control .restriction-select {
       width: min(320px, 100%);
+    }
+
+    .auto-restriction-note,
+    .standalone-restriction-note {
+      margin: -2px 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.7;
+      white-space: nowrap;
     }
     .auto-restriction-alert,
     .standalone-restriction-alert {
@@ -738,14 +747,6 @@
     }
     .standalone-restriction-control {
       position: relative;
-    }
-    .standalone-restriction-note {
-      margin-bottom: 8px;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 400;
-      line-height: 1.7;
-      white-space: nowrap;
     }
     .restriction-select {
       width: 100%;
@@ -918,9 +919,6 @@
       .auto-primer-controls,
       .restriction-controls {
         grid-template-columns: 1fr;
-      }
-      .standalone-restriction-note {
-        white-space: normal;
       }
       .auto-primer-direction {
         margin-left: 0;
