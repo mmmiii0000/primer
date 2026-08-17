@@ -652,6 +652,40 @@
       box-shadow: 0 3px 8px rgba(49, 87, 213, 0.22);
     }
 
+    .auto-restriction-control {
+      position: relative;
+      width: min(280px, 100%);
+      margin-top: 14px;
+    }
+
+    .auto-restriction-alert {
+      position: absolute;
+      z-index: 40;
+      top: calc(100% + 7px);
+      left: 0;
+      width: min(420px, 82vw);
+      padding: 12px 14px;
+      color: #8a5a00;
+      background: #fff8e6;
+      border: 1px solid #f2cf7a;
+      border-radius: 10px;
+      box-shadow: 0 10px 28px rgba(25, 42, 70, 0.16);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.65;
+    }
+
+    .auto-restriction-alert strong {
+      font-weight: 900;
+    }
+
+    .auto-primer-restriction-meta {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
     .auto-primer-result-box {
       margin-top: 18px;
       padding: 20px;
@@ -1140,11 +1174,11 @@
   <h2 class="section-title">一変異導入用プライマー設計</h2>
 
   <!-- DNA配列 -->
-  <h2>塩基配列（全長）を入力</h2>
+  <h2>塩基配列を入力</h2>
   <div class="input-with-count">  
   <textarea
     id="sequence"
-    placeholder="アミノ酸に対応する塩基配列（5' → 3'）を入力してください&#10;例：ATGAAAGCTGCT..."
+    placeholder="アミノ酸に対応する塩基配列（5' → 3'）を入力してください&#10;入力配列中で最初に現れるATGを1残基目としてカウントします&#10;例：ATGAAAGCTGCT..."
   ></textarea>
     <div class="char-count" data-count-for="sequence">0文字</div>
   </div>
@@ -1297,6 +1331,40 @@
       placeholder="5' → 3' の塩基配列を入力してください&#10;例：ATGCGATCGATCGATCGATCGC"
     ></textarea>
       <div class="char-count" data-count-for="autoPrimerSequence">0文字</div>
+    </div>
+
+    <div
+      id="autoRestrictionControl"
+      class="auto-restriction-control"
+    >
+      <div class="restriction-select-wrap">
+        <label for="autoRestrictionEnzyme">
+          5'制限酵素付加
+        </label>
+
+        <select
+          id="autoRestrictionEnzyme"
+          class="restriction-select"
+        >
+          <option value="" data-name="">
+            付加しない
+          </option>
+          <option value="GGATCC" data-name="BamHI">BamHI — GGATCC</option>
+          <option value="AGATCT" data-name="BglII">BglII — AGATCT</option>
+          <option value="CATATG" data-name="NdeI">NdeI — CATATG</option>
+          <option value="GCGGCCGC" data-name="NotI">NotI — GCGGCCGC</option>
+          <option value="GTCGAC" data-name="SalI">SalI — GTCGAC</option>
+          <option value="CTGCAG" data-name="PstI">PstI — CTGCAG</option>
+          <option value="GAATTC" data-name="EcoRI">EcoRI — GAATTC</option>
+          <option value="AAGCTT" data-name="HindIII">HindIII — AAGCTT</option>
+        </select>
+      </div>
+
+      <div
+        id="autoRestrictionAlert"
+        class="auto-restriction-alert"
+        hidden
+      ></div>
     </div>
 
     <button id="autoPrimerButton">
@@ -1516,8 +1584,12 @@
         return [...sequence].reverse().map(complement).join("");
       }
 
-      function getCodonStart(position) {
-        return (position - 1) * 3;
+      function getCodonStart(position, codingStart = 0) {
+        return codingStart + (position - 1) * 3;
+      }
+
+      function findFirstStartCodon(sequence) {
+        return sequence.indexOf("ATG");
       }
 
       function countBaseChanges(originalCodon, mutantCodon) {
@@ -1545,30 +1617,26 @@
         });
       }
 
-      function codingSequenceWarnings(sequence) {
+      function codingSequenceWarnings(sequence, codingStart) {
         const warnings = [];
-
-        if (sequence.slice(0, 3) !== "ATG") {
-          warnings.push(
-            "最初が開始コドン（ATG）ではありません。"
-          );
-        }
+        const codingSequence =
+          sequence.slice(codingStart);
 
         const remainder =
-          sequence.length % 3;
+          codingSequence.length % 3;
 
         if (remainder !== 0) {
           warnings.push(
-            `配列長が3の倍数ではありません。末尾の${remainder}塩基はコドンとして読めません。`
+            `最初のATGから末端までの塩基数が3の倍数ではありません。末尾の${remainder}塩基はコドンとして読めません。`
           );
         }
 
         const readableLength =
-          sequence.length - remainder;
+          codingSequence.length - remainder;
 
         const lastCompleteCodon =
           readableLength >= 3
-            ? sequence.slice(
+            ? codingSequence.slice(
                 readableLength - 3,
                 readableLength
               )
@@ -2232,19 +2300,49 @@
       }
 
       function updateOriginalAA() {
-        const sequence = cleanSequence($("sequence").value);
-        const position = Number($("position").value);
+        const sequence =
+          cleanSequence(
+            $("sequence").value
+          );
 
-        if (!sequence || !Number.isInteger(position) || position < 1) {
+        const position =
+          Number(
+            $("position").value
+          );
+
+        if (
+          !sequence ||
+          !Number.isInteger(position) ||
+          position < 1
+        ) {
           $("originalAA").value = "";
           return;
         }
 
-        const codonStart = getCodonStart(position);
-        const codon = sequence.slice(codonStart, codonStart + 3);
-        $("originalAA").value = /^[ATGC]{3}$/.test(codon)
-          ? (CODON_TABLE[codon] ?? "")
-          : "";
+        const codingStart =
+          findFirstStartCodon(sequence);
+
+        if (codingStart < 0) {
+          $("originalAA").value = "";
+          return;
+        }
+
+        const codonStart =
+          getCodonStart(
+            position,
+            codingStart
+          );
+
+        const codon =
+          sequence.slice(
+            codonStart,
+            codonStart + 3
+          );
+
+        $("originalAA").value =
+          /^[ATGC]{3}$/.test(codon)
+            ? (CODON_TABLE[codon] ?? "")
+            : "";
       }
 
       const mutationPrimerTargets = {
@@ -2339,12 +2437,27 @@
 
         if (!sequence) return fail("塩基配列を入力してください。");
         if (!isDNA(sequence)) return fail(DNA_ERROR);
+
+        const codingStart =
+          findFirstStartCodon(sequence);
+
+        if (codingStart < 0) {
+          return fail(
+            "入力配列に、1残基目の開始点となるATGが見つかりません。"
+          );
+        }
+
         if (!Number.isInteger(position) || position < 1) return fail("残基番号を正しく入力してください。");
         if (originalAA && !AA_TO_CODONS[originalAA]) return fail("元のアミノ酸を1文字表記で入力してください。");
         if (!AA_TO_CODONS[mutantAA]) return fail("変異後のアミノ酸を1文字表記で入力してください。");
         if (primerSetting.error) return fail(primerSetting.error);
 
-        const codonStart = getCodonStart(position);
+        const codonStart =
+          getCodonStart(
+            position,
+            codingStart
+          );
+
         if (codonStart + 3 > sequence.length) {
           return fail("指定された残基番号は配列範囲外です。");
         }
@@ -2361,7 +2474,13 @@
         }
 
         const candidateCodons = sortMutationCodons(AA_TO_CODONS[mutantAA], originalCodon);
-        const warnings = new Set(codingSequenceWarnings(sequence));
+        const warnings =
+          new Set(
+            codingSequenceWarnings(
+              sequence,
+              codingStart
+            )
+          );
 
         const rows = [];
 
@@ -2442,6 +2561,69 @@
       /* ======================================================
          4. 自動Primer設計
       ====================================================== */
+
+      let autoRestrictionAlertDismissed = false;
+
+      function getAutoRestrictionSelection() {
+        const select =
+          $("autoRestrictionEnzyme");
+
+        const option =
+          select.options[
+            select.selectedIndex
+          ];
+
+        if (!select.value) {
+          return null;
+        }
+
+        return {
+          site: select.value,
+          enzymeName:
+            option.dataset.name
+        };
+      }
+
+      function updateAutoRestrictionAlert({
+        resetDismissed = false
+      } = {}) {
+        const alert =
+          $("autoRestrictionAlert");
+
+        const selection =
+          getAutoRestrictionSelection();
+
+        const sequence =
+          cleanSequence(
+            $("autoPrimerSequence").value
+          );
+
+        if (resetDismissed) {
+          autoRestrictionAlertDismissed = false;
+        }
+
+        const hasConflict =
+          selection &&
+          isDNA(sequence) &&
+          sequence.includes(selection.site);
+
+        if (!hasConflict) {
+          alert.hidden = true;
+          alert.innerHTML = "";
+          autoRestrictionAlertDismissed = false;
+          return;
+        }
+
+        alert.innerHTML = `
+          <strong>⚠ ${selection.enzymeName} 認識配列を検出</strong><br>
+          入力配列中に認識配列
+          <strong>${selection.site}</strong>
+          が含まれています。制限酵素処理時に、入力配列内部も切断される可能性があります。
+        `;
+
+        alert.hidden =
+          autoRestrictionAlertDismissed;
+      }
 
       function createAutoPrimerState() {
         return {
@@ -2572,6 +2754,27 @@
           return "";
         }
 
+        const restriction =
+          getAutoRestrictionSelection();
+
+        const outputSequence =
+          restriction
+            ? restriction.site + candidate.sequence
+            : candidate.sequence;
+
+        const outputSequenceHtml =
+          restriction
+            ? `<span class="restriction-site-highlight">${restriction.site}</span>${candidate.sequence}`
+            : candidate.sequence;
+
+        const restrictionMetaHtml =
+          restriction
+            ? `<div class="auto-primer-restriction-meta">
+                ${restriction.enzymeName}：${restriction.site}を5'側に付加 ／
+                付加後Length：${outputSequence.length} nt
+              </div>`
+            : "";
+
         const errorMessageHtml =
           state.message && state.messageType === "error"
             ? `<div class="error">${state.message}</div>`
@@ -2596,9 +2799,11 @@
               </div>
 
               <div class="auto-primer-sequence">
-                ${candidate.sequence}
-                ${copyButtonHtml(candidate.sequence)}
+                ${outputSequenceHtml}
+                ${copyButtonHtml(outputSequence)}
               </div>
+
+              ${restrictionMetaHtml}
 
               <div class="auto-primer-stats">
                 <span>
@@ -2875,6 +3080,23 @@
       $("position").addEventListener("input", updateOriginalAA);
       $("sequence").addEventListener("input", updateOriginalAA);
 
+      $("autoRestrictionEnzyme").addEventListener(
+        "change",
+        () => {
+          updateAutoRestrictionAlert({
+            resetDismissed: true
+          });
+          renderAutoPrimer();
+        }
+      );
+
+      $("autoPrimerSequence").addEventListener(
+        "input",
+        () => {
+          updateAutoRestrictionAlert();
+        }
+      );
+
       document
         .querySelectorAll('input[name="mutationPrimerMode"]')
         .forEach((radio) => {
@@ -2907,6 +3129,20 @@
         document.querySelectorAll(".notice-details[open]").forEach((details) => {
           if (!details.contains(event.target)) details.removeAttribute("open");
         });
+
+        const autoRestrictionControl =
+          $("autoRestrictionControl");
+
+        const autoRestrictionAlert =
+          $("autoRestrictionAlert");
+
+        if (
+          !autoRestrictionAlert.hidden &&
+          !autoRestrictionControl.contains(event.target)
+        ) {
+          autoRestrictionAlert.hidden = true;
+          autoRestrictionAlertDismissed = true;
+        }
 
         const copyButton = event.target.closest("[data-copy]");
         if (copyButton) {
