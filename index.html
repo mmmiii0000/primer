@@ -654,8 +654,30 @@
 
     .auto-restriction-control {
       position: relative;
-      width: min(280px, 100%);
+      width: 100%;
       margin-top: 14px;
+    }
+
+    .auto-restriction-control .auto-restriction-label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .auto-restriction-note {
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.7;
+      white-space: nowrap;
+    }
+
+    .auto-restriction-control .restriction-select {
+      width: min(320px, 100%);
     }
 
     .auto-restriction-alert {
@@ -1338,9 +1360,16 @@
       class="auto-restriction-control"
     >
       <div class="restriction-select-wrap">
-        <label for="autoRestrictionEnzyme">
+        <label
+          for="autoRestrictionEnzyme"
+          class="auto-restriction-label"
+        >
           5'制限酵素付加
         </label>
+
+        <div class="auto-restriction-note">
+          入力配列内に選択した制限酵素の認識配列が含まれる場合は、警告が表示されます。
+        </div>
 
         <select
           id="autoRestrictionEnzyme"
