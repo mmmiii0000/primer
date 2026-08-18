@@ -201,11 +201,6 @@
       border: 1px solid var(--line);
       border-radius: 9px;
     }
-    .mutation-primer-mode input {
-      position: absolute;
-      opacity: 0;
-      pointer-events: none;
-    }
     .mutation-primer-mode label {
       min-width: 46px;
       padding: 6px 8px;
@@ -220,11 +215,6 @@
         color 0.15s ease,
         background-color 0.15s ease,
         box-shadow 0.15s ease;
-    }
-    .mutation-primer-mode input:checked + label {
-      color: #ffffff;
-      background: var(--primary);
-      box-shadow: 0 3px 8px rgba(49, 87, 213, 0.22);
     }
     .mutation-target-input {
       width: 62px;
@@ -470,69 +460,65 @@
     }
 
     /* ---------- コピーアイコン ---------- */
+    .copy-button,
+    .order-copy-button {
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #cfd8f6;
+      border-radius: 8px;
+      color: var(--primary);
+      background: #ffffff;
+      box-shadow: none;
+    }
+
     .copy-button {
       width: 30px;
       height: 30px;
       min-width: 30px;
       margin: 0;
-      padding: 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid #cfd8f6;
-      border-radius: 8px;
-      color: var(--primary);
-      background: #ffffff;
-      box-shadow: none;
       cursor: pointer;
     }
-    .copy-button:hover {
-      transform: none;
-      background: var(--primary-soft);
-      box-shadow: none;
-    }
-    .copy-button.copied {
-      color: #137a43;
-      background: var(--success-soft);
-      border-color: #b7e4c7;
-    }
-    .copy-button svg {
-      width: 16px;
-      height: 16px;
-      pointer-events: none;
-    }
+
     .order-copy-cell {
       text-align: center;
     }
+
     .order-copy-button {
       width: 28px;
       height: 28px;
       min-width: 28px;
       margin: 0 auto;
-      padding: 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid #cfd8f6;
-      border-radius: 8px;
-      color: var(--primary);
-      background: #ffffff;
-      box-shadow: none;
     }
+
+    .copy-button:hover,
     .order-copy-button:hover {
       transform: none;
       background: var(--primary-soft);
       box-shadow: none;
     }
+
+    .copy-button.copied,
     .order-copy-button.copied {
       color: #137a43;
       background: var(--success-soft);
       border-color: #b7e4c7;
     }
+
+    .copy-button svg,
+    .order-copy-button svg {
+      pointer-events: none;
+    }
+
+    .copy-button svg {
+      width: 16px;
+      height: 16px;
+    }
+
     .order-copy-button svg {
       width: 14px;
       height: 14px;
-      pointer-events: none;
     }
 
     /* ---------- 自動Primer ---------- */
@@ -582,6 +568,7 @@
     .auto-primer-setting {
       margin-left: 60px;
     }
+    .mutation-primer-mode input,
     .auto-primer-origin input,
     .auto-primer-direction input {
       position: absolute;
@@ -610,6 +597,7 @@
     .auto-primer-direction label {
       min-width: 40px;
     }
+    .mutation-primer-mode input:checked + label,
     .auto-primer-origin input:checked + label,
     .auto-primer-direction input:checked + label {
       color: #ffffff;
@@ -1055,6 +1043,28 @@
       text-align: left;
       white-space: normal;
     }
+    .mutation-no-with-warning {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .mutation-no-with-warning .notice-details {
+      flex: 0 0 auto;
+    }
+
+    .mutation-no-with-warning.variant-no {
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .mutation-no-with-warning.variant-no .notice-details {
+      display: block;
+      margin: 0 auto;
+    }
+
     .mutation-summary-line,
     .auto-primer-title-line {
       display: inline-flex;
@@ -1091,206 +1101,7 @@
         font-size: 7.5px;
       }
     }
-</style></head>
-<body>
-<div class="container">
-  <h1>Primer Designer</h1>
-  <h2 class="section-title">一変異導入用プライマー設計</h2>
-
-  <!-- DNA配列 -->
-  <h2>塩基配列を入力</h2>
-  <div class="input-with-count">
-  <textarea
-    id="sequence"
-    placeholder="アミノ酸に対応する塩基配列（5' → 3'）を入力してください&#10;入力配列中で最初に現れるATGを1残基目としてカウントします&#10;例：ATGAAAGCTGCT..."
-  ></textarea>
-    <div class="char-count" data-count-for="sequence">0文字</div>
-  </div>
-
-  <!-- 変異 -->
-  <div class="mutation-row">
-    <div class="mutation-main">
-      <input type="number" id="position" class="position-input" min="1" placeholder="50" >
-      <span>番目の</span>
-      <input type="text" id="originalAA" class="aa-input" maxlength="1" placeholder="自動" >
-      <span>残基を</span>
-      <input type="text" id="mutantAA" class="aa-input" maxlength="1" placeholder="G" >
-      <span>に変換する。</span>
-    </div>
-    <div class="mutation-primer-setting">
-      <span class="mutation-setting-label">3'側：</span>
-      <div class="mutation-primer-mode" aria-label="3'側の設計基準">
-        <input type="radio" id="mutationPrimerModeBases" name="mutationPrimerMode" value="bases" checked>
-        <label for="mutationPrimerModeBases">塩基数</label>
-        <input type="radio" id="mutationPrimerModeTm" name="mutationPrimerMode" value="tm">
-        <label for="mutationPrimerModeTm">Tm</label>
-      </div>
-      <input type="number" id="mutationPrimerTarget" class="mutation-target-input" min="1" step="1" value="18" >
-      <span id="mutationPrimerTargetUnit" class="mutation-target-unit">塩基</span>
-    </div>
-  </div>
-   <p class="sequence-note"><br>
-        Primer F：変異コドンに加えて、5'側6塩基と、選択した条件に基づく3'側配列を含めたプライマーを作成します。<br>
-        Primer R：Primer Fと同様の操作を、相補鎖（reverse complement）に対して行います。<br>
-        Tm：最近接塩基対法で計算します（Primer濃度 0.5 µM、Na<sup>+</sup> 50 mM）。Primer F / Rともに、変異コドン自体は含めず、<strong>変異コドンより3'側の配列のみ</strong>をTm計算に使用します。<br>
-        Length：<strong>プライマー全長 / 変異コドンより3'側</strong>の塩基数を表示します。<br>
-        Codon Usage：大腸菌の値を用いています。
-    </p>
-  <h2>タンパク質名を入力（任意）</h2>
-  <p class="sequence-note">
-    タンパク質名を入力すると、注文用コピー時のPrimer名にタンパク質名を含めることができます。
-  </p>
-  <input type="text" id="proteinName" class="protein-name-input" placeholder="例：XxxA" autocomplete="off" >
-  <button id="designButton">
-    プライマーを設計
-  </button>
-
-  <!-- Primer設計結果 -->
-  <div id="result"></div>
-
-  <!-- 自動プライマー設計 -->
-  <div class="auto-primer-section">
-    <h2 class="section-title">自動プライマー設計</h2>
-    <p class="sequence-note">
-      「前から」または「後ろから」で開始位置を指定し、その塩基を起点として、選択した条件に基づき、3'末端がG/CのPrimerを自動で設計します。<br>
-      Fを選択すると入力配列に沿ったForward primerを、Rを選択すると入力配列に対するReverse primerを、指定した塩基を起点に5'→3'で設計します。
-    </p>
-    <div class="auto-primer-start-row">
-      <div class="auto-primer-origin" aria-label="開始位置の数え方">
-        <input type="radio" id="autoPrimerOriginFront" name="autoPrimerOrigin" value="front" checked >
-        <label for="autoPrimerOriginFront">前から</label>
-        <input type="radio" id="autoPrimerOriginBack" name="autoPrimerOrigin" value="back" >
-        <label for="autoPrimerOriginBack">後ろから</label>
-      </div>
-      <input type="number" id="autoPrimerStart" min="1" value="1" >
-      <span>塩基目から開始</span>
-      <div class="auto-primer-direction" aria-label="Primer方向">
-        <input type="radio" id="autoPrimerDirectionF" name="autoPrimerDirection" value="F" checked >
-        <label for="autoPrimerDirectionF">F</label>
-        <input type="radio" id="autoPrimerDirectionR" name="autoPrimerDirection" value="R" >
-        <label for="autoPrimerDirectionR">R</label>
-      </div>
-      <div class="mutation-primer-setting auto-primer-setting">
-        <div class="mutation-primer-mode" aria-label="自動Primerの設計基準">
-          <input type="radio" id="autoPrimerModeBases" name="autoPrimerMode" value="bases" >
-          <label for="autoPrimerModeBases">塩基数</label>
-          <input type="radio" id="autoPrimerModeTm" name="autoPrimerMode" value="tm" checked >
-          <label for="autoPrimerModeTm">Tm</label>
-        </div>
-        <input
-          type="number"
-          id="autoPrimerTarget"
-          class="mutation-target-input"
-          min="0"
-          step="0.5"
-          value="58"
-        >
-        <span id="autoPrimerTargetUnit" class="mutation-target-unit">℃</span>
-      </div>
-    </div>
-    <div class="input-with-count">    <textarea
-      id="autoPrimerSequence"
-      class="tm-textarea"
-      placeholder="5' → 3' の塩基配列を入力してください&#10;例：ATGCGATCGATCGATCGATCGC"
-    ></textarea>
-      <div class="char-count" data-count-for="autoPrimerSequence">0文字</div>
-    </div>
-    <div id="autoRestrictionControl" class="auto-restriction-control" >
-      <div class="restriction-select-wrap">
-        <label for="autoRestrictionEnzyme" class="auto-restriction-label" >
-          5'制限酵素サイト付加
-        </label>
-        <div class="auto-restriction-note">
-          入力配列内に選択した制限酵素の認識配列が含まれる場合は、警告が表示されます。
-        </div>
-        <select id="autoRestrictionEnzyme" class="restriction-select" >
-          <option value="" data-name="">
-            付加しない
-          </option>
-          <option value="GGATCC" data-name="BamHI">BamHI — GGATCC</option>
-          <option value="AGATCT" data-name="BglII">BglII — AGATCT</option>
-          <option value="CATATG" data-name="NdeI">NdeI — CATATG</option>
-          <option value="GCGGCCGC" data-name="NotI">NotI — GCGGCCGC</option>
-          <option value="GTCGAC" data-name="SalI">SalI — GTCGAC</option>
-          <option value="CTGCAG" data-name="PstI">PstI — CTGCAG</option>
-          <option value="GAATTC" data-name="EcoRI">EcoRI — GAATTC</option>
-          <option value="AAGCTT" data-name="HindIII">HindIII — AAGCTT</option>
-        </select>
-      </div>
-      <div id="autoRestrictionAlert" class="auto-restriction-alert" hidden ></div>
-    </div>
-    <button id="autoPrimerButton">
-      設計
-    </button>
-    <div id="autoPrimerResult"></div>
-  </div>
-
-  <!-- 独立Tm計算 -->
-  <div class="tm-calculator-section">
-    <h2 class="section-title">Tmを計算（最近接塩基対法）</h2>
-    <p class="sequence-note">
-      TmとGC率を求めたい塩基配列を5'→3'で入力してください。入力した配列全体と、設定したPrimer濃度・Na<sup>+</sup>濃度を用いてTmを計算し、GC率も同時に表示します。
-    </p>
-    <div class="input-with-count">    <textarea
-      id="tmSequence"
-      class="tm-textarea"
-      placeholder="5' → 3' の塩基配列を入力してください&#10;例：GCGATCGATCGATCGC"
-    ></textarea>
-      <div class="char-count" data-count-for="tmSequence">0文字</div>
-    </div>
-    <div class="tm-control-row">
-      <div class="tm-concentration-control">
-        <label for="tmPrimerConcentration">Primer濃度</label>
-        <input
-          type="number"
-          id="tmPrimerConcentration"
-          class="tm-concentration-input"
-          min="0.1"
-          step="0.1"
-          value="0.5"
-        >
-        <span>µM</span>
-      </div>
-
-      <div class="tm-concentration-control">
-        <label for="tmNaConcentration">Na<sup>+</sup>濃度</label>
-        <input
-          type="number"
-          id="tmNaConcentration"
-          class="tm-concentration-input"
-          min="1"
-          step="1"
-          value="50"
-        >
-        <span>mM</span>
-      </div>
-
-      <button id="tmCalculateButton" class="secondary-button tm-calculate-button">
-        Tmを計算
-      </button>
-    </div>
-    <div id="tmResult"></div>
-  </div>
-
-  <!-- 相補鎖変換 -->
-  <div class="complement-section">
-    <h2 class="section-title">逆向き相補鎖に変換</h2>
-    <p class="sequence-note">
-      塩基配列を5'→3'で入力してください。A↔T、G↔Cで相補鎖に変換した後、配列を反転し、逆向き相補鎖（reverse complement）を5'→3'で表示します。
-    </p>
-    <div class="input-with-count">    <textarea
-      id="complementSequence"
-      class="tm-textarea"
-      placeholder="5' → 3' の塩基配列を入力してください&#10;例：ATGCGTAC"
-    ></textarea>
-      <div class="char-count" data-count-for="complementSequence">0文字</div>
-    </div>
-    <button id="complementButton" class="secondary-button">
-      逆向き相補鎖に変換
-    </button>
-    <div id="complementResult"></div>
-  </div>
-</div><script>
+</style></head>\n<body>\n<div class="container">\n  <h1>Primer Designer</h1>\n  <h2 class="section-title">一変異導入用プライマー設計</h2>\n\n  <!-- DNA配列 -->\n  <h2>塩基配列を入力</h2>\n  <div class="input-with-count">\n  <textarea\n    id="sequence"\n    placeholder="アミノ酸に対応する塩基配列（5' → 3'）を入力してください&#10;入力配列中で最初に現れるATGを1残基目としてカウントします&#10;例：ATGAAAGCTGCT..."\n  ></textarea>\n    <div class="char-count" data-count-for="sequence">0文字</div>\n  </div>\n\n  <!-- 変異 -->\n  <div class="mutation-row">\n    <div class="mutation-main">\n      <input type="number" id="position" class="position-input" min="1" placeholder="50" >\n      <span>番目の</span>\n      <input type="text" id="originalAA" class="aa-input" maxlength="1" placeholder="自動" >\n      <span>残基を</span>\n      <input type="text" id="mutantAA" class="aa-input" maxlength="1" placeholder="G" >\n      <span>に変換する。</span>\n    </div>\n    <div class="mutation-primer-setting">\n      <span class="mutation-setting-label">3'側：</span>\n      <div class="mutation-primer-mode" aria-label="3'側の設計基準">\n        <input type="radio" id="mutationPrimerModeBases" name="mutationPrimerMode" value="bases" checked>\n        <label for="mutationPrimerModeBases">塩基数</label>\n        <input type="radio" id="mutationPrimerModeTm" name="mutationPrimerMode" value="tm">\n        <label for="mutationPrimerModeTm">Tm</label>\n      </div>\n      <input type="number" id="mutationPrimerTarget" class="mutation-target-input" min="1" step="1" value="18" >\n      <span id="mutationPrimerTargetUnit" class="mutation-target-unit">塩基</span>\n    </div>\n  </div>\n   <p class="sequence-note"><br>\n        Primer F：変異コドンに加えて、5'側6塩基と、選択した条件に基づく3'側配列を含めたプライマーを作成します。<br>\n        Primer R：Primer Fと同様の操作を、相補鎖（reverse complement）に対して行います。<br>\n        Tm：最近接塩基対法で計算します（Primer濃度 0.5 µM、Na<sup>+</sup> 50 mM）。Primer F / Rともに、変異コドン自体は含めず、<strong>変異コドンより3'側の配列のみ</strong>をTm計算に使用します。<br>\n        Length：<strong>プライマー全長 / 変異コドンより3'側</strong>の塩基数を表示します。<br>\n        Codon Usage：大腸菌の値を用いています。\n    </p>\n  <h2>タンパク質名を入力（任意）</h2>\n  <p class="sequence-note">\n    タンパク質名を入力すると、注文用コピー時のPrimer名にタンパク質名を含めることができます。\n  </p>\n  <input type="text" id="proteinName" class="protein-name-input" placeholder="例：XxxA" autocomplete="off" >\n  <button id="designButton">\n    プライマーを設計\n  </button>\n\n  <!-- Primer設計結果 -->\n  <div id="result"></div>\n\n  <!-- 自動プライマー設計 -->\n  <div class="auto-primer-section">\n    <h2 class="section-title">自動プライマー設計</h2>\n    <p class="sequence-note">\n      「前から」または「後ろから」で開始位置を指定し、その塩基を起点として、選択した条件に基づき、3'末端がG/CのPrimerを自動で設計します。<br>\n      Fを選択すると入力配列に沿ったForward primerを、Rを選択すると入力配列に対するReverse primerを、指定した塩基を起点に5'→3'で設計します。\n    </p>\n    <div class="auto-primer-start-row">\n      <div class="auto-primer-origin" aria-label="開始位置の数え方">\n        <input type="radio" id="autoPrimerOriginFront" name="autoPrimerOrigin" value="front" checked >\n        <label for="autoPrimerOriginFront">前から</label>\n        <input type="radio" id="autoPrimerOriginBack" name="autoPrimerOrigin" value="back" >\n        <label for="autoPrimerOriginBack">後ろから</label>\n      </div>\n      <input type="number" id="autoPrimerStart" min="1" value="1" >\n      <span>塩基目から開始</span>\n      <div class="auto-primer-direction" aria-label="Primer方向">\n        <input type="radio" id="autoPrimerDirectionF" name="autoPrimerDirection" value="F" checked >\n        <label for="autoPrimerDirectionF">F</label>\n        <input type="radio" id="autoPrimerDirectionR" name="autoPrimerDirection" value="R" >\n        <label for="autoPrimerDirectionR">R</label>\n      </div>\n      <div class="mutation-primer-setting auto-primer-setting">\n        <div class="mutation-primer-mode" aria-label="自動Primerの設計基準">\n          <input type="radio" id="autoPrimerModeBases" name="autoPrimerMode" value="bases" >\n          <label for="autoPrimerModeBases">塩基数</label>\n          <input type="radio" id="autoPrimerModeTm" name="autoPrimerMode" value="tm" checked >\n          <label for="autoPrimerModeTm">Tm</label>\n        </div>\n        <input\n          type="number"\n          id="autoPrimerTarget"\n          class="mutation-target-input"\n          min="0"\n          step="0.5"\n          value="58"\n        >\n        <span id="autoPrimerTargetUnit" class="mutation-target-unit">℃</span>\n      </div>\n    </div>\n    <div class="input-with-count">    <textarea\n      id="autoPrimerSequence"\n      class="tm-textarea"\n      placeholder="5' → 3' の塩基配列を入力してください&#10;例：ATGCGATCGATCGATCGATCGC"\n    ></textarea>\n      <div class="char-count" data-count-for="autoPrimerSequence">0文字</div>\n    </div>\n    <div id="autoRestrictionControl" class="auto-restriction-control" >\n      <div class="restriction-select-wrap">\n        <label for="autoRestrictionEnzyme" class="auto-restriction-label" >\n          5'制限酵素サイト付加\n        </label>\n        <div class="auto-restriction-note">\n          入力配列内に選択した制限酵素の認識配列が含まれる場合は、警告が表示されます。\n        </div>\n        <select id="autoRestrictionEnzyme" class="restriction-select" >\n          <option value="" data-name="">\n            付加しない\n          </option>\n          <option value="GGATCC" data-name="BamHI">BamHI — GGATCC</option>\n          <option value="AGATCT" data-name="BglII">BglII — AGATCT</option>\n          <option value="CATATG" data-name="NdeI">NdeI — CATATG</option>\n          <option value="GCGGCCGC" data-name="NotI">NotI — GCGGCCGC</option>\n          <option value="GTCGAC" data-name="SalI">SalI — GTCGAC</option>\n          <option value="CTGCAG" data-name="PstI">PstI — CTGCAG</option>\n          <option value="GAATTC" data-name="EcoRI">EcoRI — GAATTC</option>\n          <option value="AAGCTT" data-name="HindIII">HindIII — AAGCTT</option>\n        </select>\n      </div>\n      <div id="autoRestrictionAlert" class="auto-restriction-alert" hidden ></div>\n    </div>\n    <button id="autoPrimerButton">\n      設計\n    </button>\n    <div id="autoPrimerResult"></div>\n  </div>\n\n  <!-- 独立Tm計算 -->\n  <div class="tm-calculator-section">\n    <h2 class="section-title">Tmを計算（最近接塩基対法）</h2>\n    <p class="sequence-note">\n      TmとGC率を求めたい塩基配列を5'→3'で入力してください。入力した配列全体と、設定したPrimer濃度・Na<sup>+</sup>濃度を用いてTmを計算し、GC率も同時に表示します。\n    </p>\n    <div class="input-with-count">    <textarea\n      id="tmSequence"\n      class="tm-textarea"\n      placeholder="5' → 3' の塩基配列を入力してください&#10;例：GCGATCGATCGATCGC"\n    ></textarea>\n      <div class="char-count" data-count-for="tmSequence">0文字</div>\n    </div>\n    <div class="tm-control-row">\n      <div class="tm-concentration-control">\n        <label for="tmPrimerConcentration">Primer濃度</label>\n        <input\n          type="number"\n          id="tmPrimerConcentration"\n          class="tm-concentration-input"\n          min="0.1"\n          step="0.1"\n          value="0.5"\n        >\n        <span>µM</span>\n      </div>\n\n      <div class="tm-concentration-control">\n        <label for="tmNaConcentration">Na<sup>+</sup>濃度</label>\n        <input\n          type="number"\n          id="tmNaConcentration"\n          class="tm-concentration-input"\n          min="1"\n          step="1"\n          value="50"\n        >\n        <span>mM</span>\n      </div>\n\n      <button id="tmCalculateButton" class="secondary-button tm-calculate-button">\n        Tmを計算\n      </button>\n    </div>\n    <div id="tmResult"></div>\n  </div>\n\n  <!-- 相補鎖変換 -->\n  <div class="complement-section">\n    <h2 class="section-title">逆向き相補鎖に変換</h2>\n    <p class="sequence-note">\n      塩基配列を5'→3'で入力してください。A↔T、G↔Cで相補鎖に変換した後、配列を反転し、逆向き相補鎖（reverse complement）を5'→3'で表示します。\n    </p>\n    <div class="input-with-count">    <textarea\n      id="complementSequence"\n      class="tm-textarea"\n      placeholder="5' → 3' の塩基配列を入力してください&#10;例：ATGCGTAC"\n    ></textarea>\n      <div class="char-count" data-count-for="complementSequence">0文字</div>\n    </div>\n    <button id="complementButton" class="secondary-button">\n      逆向き相補鎖に変換\n    </button>\n    <div id="complementResult"></div>\n  </div>\n</div><script>
     (() => {
       "use strict";
 
@@ -1376,6 +1187,72 @@
       function reverseComplement(sequence) {
         return [...sequence].reverse().map(complement).join("");
       }
+
+      function threePrimeComplementLength(primerA, primerB, minLength = 3) {
+        const maxLength = Math.min(primerA.length, primerB.length);
+
+        for (let length = maxLength; length >= minLength; length--) {
+          const endA = primerA.slice(-length);
+          const endB = primerB.slice(-length);
+
+          if (endA === reverseComplement(endB)) {
+            return length;
+          }
+        }
+
+        return 0;
+      }
+
+      function maxSelfComplementLength(primer, minLength = 4) {
+        const maxLength = Math.floor(primer.length / 2);
+
+        for (let length = maxLength; length >= minLength; length--) {
+          for (let firstStart = 0; firstStart + length <= primer.length; firstStart++) {
+            const first = primer.slice(firstStart, firstStart + length);
+            const complementSequence = reverseComplement(first);
+
+            for (
+              let secondStart = firstStart + length;
+              secondStart + length <= primer.length;
+              secondStart++
+            ) {
+              if (
+                primer.slice(secondStart, secondStart + length) ===
+                complementSequence
+              ) {
+                return length;
+              }
+            }
+          }
+        }
+
+        return 0;
+      }
+
+      function primerPairComplementWarning(primerF, primerR) {
+        const length = threePrimeComplementLength(primerF, primerR);
+
+        return length >= 3
+          ? `Primer F / Rの3'末端に${length}塩基の連続した相補性があります。プライマーダイマーが生じる可能性があります。`
+          : "";
+      }
+
+      function primerSelfComplementWarning(primer, direction) {
+        const length = maxSelfComplementLength(primer);
+
+        return length >= 4
+          ? `Primer ${direction}内に${length}塩基の連続した自己相補配列があります。ヘアピンや自己ダイマーが生じる可能性があります。`
+          : "";
+      }
+
+      function primerStructureWarnings(primerF, primerR) {
+        return [
+          primerPairComplementWarning(primerF, primerR),
+          primerSelfComplementWarning(primerF, "F"),
+          primerSelfComplementWarning(primerR, "R")
+        ].filter(Boolean);
+      }
+
       function getCodonStart(position, codingStart = 0) {
         return codingStart + (position - 1) * 3;
       }
@@ -1485,6 +1362,73 @@
         }
         button.classList.add("copied");
         setTimeout(() => button.classList.remove("copied"), 1200);
+      }
+
+      function createPrimerTargetController({
+        radioName,
+        inputId,
+        unitId,
+        defaultMode,
+        initialTargets,
+        basesError,
+        tmError
+      }) {
+        const targets = { ...initialTargets };
+
+        function currentMode() {
+          return (
+            document.querySelector(`input[name="${radioName}"]:checked`)?.value ??
+            defaultMode
+          );
+        }
+
+        function sync() {
+          const mode = currentMode();
+          const input = $(inputId);
+
+          input.value = targets[mode];
+          input.min = mode === "bases" ? "1" : "0";
+          input.step = mode === "bases" ? "1" : "0.5";
+          $(unitId).textContent = mode === "bases" ? "塩基" : "℃";
+        }
+
+        function read() {
+          const mode = currentMode();
+          const target = Number($(inputId).value);
+
+          if (
+            mode === "bases" &&
+            (!Number.isInteger(target) || target < 1)
+          ) {
+            return { error: basesError };
+          }
+
+          if (
+            mode === "tm" &&
+            (!Number.isFinite(target) || target < 0)
+          ) {
+            return { error: tmError };
+          }
+
+          return { mode, target };
+        }
+
+        function bind() {
+          document
+            .querySelectorAll(`input[name="${radioName}"]`)
+            .forEach((radio) => radio.addEventListener("change", sync));
+
+          $(inputId).addEventListener("input", () => {
+            const value = Number($(inputId).value);
+            if (Number.isFinite(value)) {
+              targets[currentMode()] = value;
+            }
+          });
+
+          sync();
+        }
+
+        return { read, bind };
       }
 
       /* ======================================================
@@ -1767,13 +1711,37 @@
           </button>`;
       }
       function mutationRowHtml(data, extended = false) {
+        const structureWarnings =
+          primerStructureWarnings(
+            data.primerF,
+            data.primerR
+          );
+
+        const structureWarningHtml =
+          structureWarnings.length
+            ? warningDetailsHtml(
+                `<strong>注意事項</strong><br>${structureWarnings.join("<br>")}`,
+                `${data.displayNo}番のPrimerの注意事項を表示`
+              )
+            : "";
+
+        const noWarningClass =
+          data.displayNo.includes("-")
+            ? "mutation-no-with-warning variant-no"
+            : "mutation-no-with-warning";
+
         return `
           <tr
             ${extended ? 'class="extended-row"' : ""}
             id="${data.rowId}"
             data-root-no="${data.rootNo}"
           >
-            <td>${data.displayNo}</td>
+            <td>
+              <span class="${noWarningClass}">
+                ${data.displayNo}
+                ${structureWarningHtml}
+              </span>
+            </td>
             <td class="sequence">${data.mutantCodon}</td>
             <td>${data.usagePercent}%</td>
             <td>${data.baseChanges}</td>
@@ -1950,68 +1918,23 @@
             ? (CODON_TABLE[codon] ?? "")
             : "";
       }
-      const mutationPrimerTargets = {
-        bases: 18,
-        tm: 58
-      };
-      function currentMutationPrimerMode() {
-        return (
-          document.querySelector(
-            'input[name="mutationPrimerMode"]:checked'
-          )?.value ?? "bases"
-        );
-      }
-      function syncMutationPrimerTargetControl() {
-        const mode = currentMutationPrimerMode();
-        const input = $("mutationPrimerTarget");
-        input.value =
-          mutationPrimerTargets[mode];
-        input.min =
-          mode === "bases"
-            ? "1"
-            : "0";
-        input.step =
-          mode === "bases"
-            ? "1"
-            : "0.5";
-        $("mutationPrimerTargetUnit").textContent =
-          mode === "bases"
-            ? "塩基"
-            : "℃";
-      }
-      function readMutationPrimerSetting() {
-        const mode = currentMutationPrimerMode();
-        const target = Number($("mutationPrimerTarget").value);
-        if (
-          mode === "bases" &&
-          (!Number.isInteger(target) || target < 1)
-        ) {
-          return {
-            error:
-              "3'側の塩基数は1以上の整数で入力してください。"
-          };
-        }
-        if (
-          mode === "tm" &&
-          (!Number.isFinite(target) || target < 0)
-        ) {
-          return {
-            error:
-              "3'側のTmは0以上の数値で入力してください。"
-          };
-        }
-        return {
-          mode,
-          target
-        };
-      }
+      const mutationPrimerControl = createPrimerTargetController({
+        radioName: "mutationPrimerMode",
+        inputId: "mutationPrimerTarget",
+        unitId: "mutationPrimerTargetUnit",
+        defaultMode: "bases",
+        initialTargets: { bases: 18, tm: 58 },
+        basesError: "3'側の塩基数は1以上の整数で入力してください。",
+        tmError: "3'側のTmは0以上の数値で入力してください。"
+      });
+
       function handleMutationDesign() {
         const result = $("result");
         const sequence = cleanSequence($("sequence").value);
         const position = Number($("position").value);
         const originalAA = $("originalAA").value.trim().toUpperCase();
         const mutantAA = $("mutantAA").value.trim().toUpperCase();
-        const primerSetting = readMutationPrimerSetting();
+        const primerSetting = mutationPrimerControl.read();
         result.innerHTML = "";
         mutationState.rows.clear();
         mutationState.variantCounts.clear();
@@ -2182,49 +2105,16 @@
         F: createAutoPrimerState(),
         R: createAutoPrimerState()
       };
-      const autoPrimerTargets = {
-        bases: 18,
-        tm: 58
-      };
-      function currentAutoPrimerMode() {
-        return (
-          document.querySelector(
-            'input[name="autoPrimerMode"]:checked'
-          )?.value ?? "tm"
-        );
-      }
-      function syncAutoPrimerTargetControl() {
-        const mode = currentAutoPrimerMode();
-        const input = $("autoPrimerTarget");
-        input.value = autoPrimerTargets[mode];
-        input.min = mode === "bases" ? "1" : "0";
-        input.step = mode === "bases" ? "1" : "0.5";
-        $("autoPrimerTargetUnit").textContent =
-          mode === "bases" ? "塩基" : "℃";
-      }
-      function readAutoPrimerSetting() {
-        const mode = currentAutoPrimerMode();
-        const target = Number($("autoPrimerTarget").value);
-        if (
-          mode === "bases" &&
-          (!Number.isInteger(target) || target < 1)
-        ) {
-          return {
-            error:
-              "Primerの塩基数は1以上の整数で入力してください。"
-          };
-        }
-        if (
-          mode === "tm" &&
-          (!Number.isFinite(target) || target < 0)
-        ) {
-          return {
-            error:
-              "PrimerのTmは0以上の数値で入力してください。"
-          };
-        }
-        return { mode, target };
-      }
+      const autoPrimerControl = createPrimerTargetController({
+        radioName: "autoPrimerMode",
+        inputId: "autoPrimerTarget",
+        unitId: "autoPrimerTargetUnit",
+        defaultMode: "tm",
+        initialTargets: { bases: 18, tm: 58 },
+        basesError: "Primerの塩基数は1以上の整数で入力してください。",
+        tmError: "PrimerのTmは0以上の数値で入力してください。"
+      });
+
       function resolveStartPosition(sequenceLength, enteredPosition, originMode) {
         return originMode === "back"
           ? sequenceLength - enteredPosition + 1
@@ -2348,10 +2238,54 @@
           state.message && state.messageType === "error"
             ? `<div class="error">${state.message}</div>`
             : "";
+
+        const warnings = [];
+
+        if (state.message && state.messageType === "warning") {
+          warnings.push(state.message);
+        }
+
+        const selfWarning =
+          primerSelfComplementWarning(
+            outputSequence,
+            candidate.direction
+          );
+
+        if (selfWarning) {
+          warnings.push(selfWarning);
+        }
+
+        const otherDirection =
+          direction === "F" ? "R" : "F";
+
+        const otherState =
+          autoState[otherDirection];
+
+        const otherCandidate =
+          otherState.candidates[
+            otherState.currentIndex
+          ];
+
+        if (otherCandidate) {
+          const pairWarning =
+            primerPairComplementWarning(
+              direction === "F"
+                ? candidate.sequence
+                : otherCandidate.sequence,
+              direction === "R"
+                ? candidate.sequence
+                : otherCandidate.sequence
+            );
+
+          if (pairWarning) {
+            warnings.push(pairWarning);
+          }
+        }
+
         const warningIconHtml =
-          state.message && state.messageType === "warning"
+          warnings.length
             ? warningDetailsHtml(
-                state.message,
+                `<strong>注意事項</strong><br>${warnings.join("<br>")}`,
                 `Primer ${candidate.direction} の注意事項を表示`
               )
             : "";
@@ -2449,7 +2383,7 @@
         const enteredPosition = Number($("autoPrimerStart").value);
         const originMode = document.querySelector('input[name="autoPrimerOrigin"]:checked')?.value ?? "front";
         const direction = document.querySelector('input[name="autoPrimerDirection"]:checked')?.value ?? "F";
-        const primerSetting = readAutoPrimerSetting();
+        const primerSetting = autoPrimerControl.read();
         // FとRは別々に保持する。同じ方向を再設計したときだけ、その方向を更新する。
         resetAutoPrimerDirection(direction);
         const sequenceError = basicDNAError(
@@ -2616,32 +2550,8 @@
           updateAutoRestrictionAlert();
         }
       );
-      document
-        .querySelectorAll('input[name="mutationPrimerMode"]')
-        .forEach((radio) => {
-          radio.addEventListener("change", syncMutationPrimerTargetControl);
-        });
-      $("mutationPrimerTarget").addEventListener("input", () => {
-        const mode = currentMutationPrimerMode();
-        const value = Number($("mutationPrimerTarget").value);
-        if (Number.isFinite(value)) {
-          mutationPrimerTargets[mode] = value;
-        }
-      });
-      document
-        .querySelectorAll('input[name="autoPrimerMode"]')
-        .forEach((radio) => {
-          radio.addEventListener("change", syncAutoPrimerTargetControl);
-        });
-      $("autoPrimerTarget").addEventListener("input", () => {
-        const mode = currentAutoPrimerMode();
-        const value = Number($("autoPrimerTarget").value);
-        if (Number.isFinite(value)) {
-          autoPrimerTargets[mode] = value;
-        }
-      });
-      syncMutationPrimerTargetControl();
-      syncAutoPrimerTargetControl();
+      mutationPrimerControl.bind();
+      autoPrimerControl.bind();
       COUNTED_INPUTS.forEach((inputId) => {
         $(inputId).addEventListener("input", () => updateCharacterCount(inputId));
         updateCharacterCount(inputId);
