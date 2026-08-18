@@ -1402,20 +1402,137 @@
         return 0;
       }
 
-      function threePrimeHairpinComplementLength(primer, minLength = 3) {
-        const maxLength = Math.floor(primer.length / 2);
+      const HAIRPIN_TEMPERATURE_K = 310.15;
+      const HAIRPIN_LOOP_DG37 = {
+        3: 3.4,
+        4: 3.4,
+        5: 3.5,
+        6: 4.2,
+        7: 4.2,
+        8: 4.2,
+        9: 4.3,
+        10: 4.4,
+        11: 4.5,
+        12: 4.6,
+        13: 4.7,
+        14: 4.8,
+        15: 5.0,
+        16: 5.1,
+        17: 5.2,
+        18: 5.3,
+        19: 5.4,
+        20: 5.5,
+        21: 5.6,
+        22: 5.7,
+        23: 5.8,
+        24: 5.9,
+        25: 6.0,
+        26: 6.1,
+        27: 6.2,
+        28: 6.3,
+        29: 6.4,
+        30: 6.5
+      };
 
-        for (let length = maxLength; length >= minLength; length--) {
-          const threePrimeEnd = primer.slice(-length);
-          const complementarySequence = reverseComplement(threePrimeEnd);
-          const upstreamSequence = primer.slice(0, primer.length - length);
+      function calculateStemDeltaG37(stem) {
+        let deltaH = 0;
+        let deltaS = 0;
 
-          if (upstreamSequence.includes(complementarySequence)) {
-            return length;
+        for (let i = 0; i < stem.length - 1; i++) {
+          const params = NN_PARAMS[stem.slice(i, i + 2)];
+          if (!params) return null;
+
+          deltaH += params.dH;
+          deltaS += params.dS;
+        }
+
+        return deltaH - HAIRPIN_TEMPERATURE_K * deltaS / 1000;
+      }
+
+      function hairpinLoopDeltaG37(loopLength) {
+        if (loopLength < 3) return null;
+        if (loopLength <= 30) return HAIRPIN_LOOP_DG37[loopLength];
+
+        const gasConstantKcal = 0.001987;
+        return (
+          HAIRPIN_LOOP_DG37[30] +
+          1.75 *
+            gasConstantKcal *
+            HAIRPIN_TEMPERATURE_K *
+            Math.log(loopLength / 30)
+        );
+      }
+
+      function findThreePrimeHairpin(primer, minStemLength = 3) {
+        const candidates = [];
+        const maxStemLength =
+          Math.floor((primer.length - 3) / 2);
+
+        for (
+          let stemLength = minStemLength;
+          stemLength <= maxStemLength;
+          stemLength++
+        ) {
+          const threePrimeStem =
+            primer.slice(-stemLength);
+          const complementarySequence =
+            reverseComplement(threePrimeStem);
+          const stemStart =
+            primer.length - stemLength;
+
+          for (
+            let matchStart = 0;
+            matchStart + stemLength <= stemStart - 3;
+            matchStart++
+          ) {
+            if (
+              primer.slice(
+                matchStart,
+                matchStart + stemLength
+              ) !== complementarySequence
+            ) {
+              continue;
+            }
+
+            const loopLength =
+              stemStart -
+              (matchStart + stemLength);
+            const stemDeltaG =
+              calculateStemDeltaG37(threePrimeStem);
+            const loopDeltaG =
+              hairpinLoopDeltaG37(loopLength);
+
+            if (
+              stemDeltaG === null ||
+              loopDeltaG === null
+            ) {
+              continue;
+            }
+
+            candidates.push({
+              stemLength,
+              loopLength,
+              deltaG: stemDeltaG + loopDeltaG
+            });
           }
         }
 
-        return 0;
+        if (!candidates.length) return null;
+
+        return candidates.reduce(
+          (best, candidate) =>
+            candidate.deltaG < best.deltaG
+              ? candidate
+              : best
+        );
+      }
+
+      function formatDeltaG(deltaG) {
+        const rounded = Math.abs(deltaG).toFixed(1);
+
+        if (deltaG < 0) return `−${rounded}`;
+        if (deltaG > 0) return `+${rounded}`;
+        return "0.0";
       }
 
       function primerPairComplementWarning(primerF, primerR) {
@@ -1427,11 +1544,32 @@
       }
 
       function primerSelfComplementWarning(primer, direction) {
-        const length = threePrimeHairpinComplementLength(primer);
+        const hairpin = findThreePrimeHairpin(primer);
+        if (!hairpin) return "";
 
-        return length >= 3
-          ? `Primer ${direction}の3'末端に対して、Primer内部に${length}塩基の連続した相補配列があります。ヘアピンが生じる可能性があります。`
-          : "";
+        const deltaGText =
+          formatDeltaG(hairpin.deltaG);
+        const prefix =
+          `Primer ${direction}の3'末端に対して、Primer内部に相補配列があります。`;
+
+        if (hairpin.deltaG >= -3.0) {
+          return (
+            `${prefix}ただ、ΔGは${deltaGText} kcal/molであるため、` +
+            `<strong>大きく気にする必要はありません。</strong>`
+          );
+        }
+
+        if (hairpin.deltaG > -9.0) {
+          return (
+            `${prefix}ΔGは${deltaGText} kcal/molであり、` +
+            `<strong>ヘアピン形成に注意した方がよいです。</strong>`
+          );
+        }
+
+        return (
+          `${prefix}ΔGは${deltaGText} kcal/molであり、` +
+          `<strong>ヘアピン形成に強く注意する必要があります。</strong>`
+        );
       }
 
       function primerStructureWarnings(primerF, primerR) {
