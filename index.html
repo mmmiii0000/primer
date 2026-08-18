@@ -1402,26 +1402,16 @@
         return 0;
       }
 
-      function maxSelfComplementLength(primer, minLength = 4) {
+      function threePrimeHairpinComplementLength(primer, minLength = 3) {
         const maxLength = Math.floor(primer.length / 2);
 
         for (let length = maxLength; length >= minLength; length--) {
-          for (let firstStart = 0; firstStart + length <= primer.length; firstStart++) {
-            const first = primer.slice(firstStart, firstStart + length);
-            const complementSequence = reverseComplement(first);
+          const threePrimeEnd = primer.slice(-length);
+          const complementarySequence = reverseComplement(threePrimeEnd);
+          const upstreamSequence = primer.slice(0, primer.length - length);
 
-            for (
-              let secondStart = firstStart + length;
-              secondStart + length <= primer.length;
-              secondStart++
-            ) {
-              if (
-                primer.slice(secondStart, secondStart + length) ===
-                complementSequence
-              ) {
-                return length;
-              }
-            }
+          if (upstreamSequence.includes(complementarySequence)) {
+            return length;
           }
         }
 
@@ -1437,10 +1427,10 @@
       }
 
       function primerSelfComplementWarning(primer, direction) {
-        const length = maxSelfComplementLength(primer);
+        const length = threePrimeHairpinComplementLength(primer);
 
-        return length >= 4
-          ? `Primer ${direction}内に${length}塩基の連続した自己相補配列があります。ヘアピンや自己ダイマーが生じる可能性があります。`
+        return length >= 3
+          ? `Primer ${direction}の3'末端に対して、Primer内部に${length}塩基の連続した相補配列があります。ヘアピンが生じる可能性があります。`
           : "";
       }
 
