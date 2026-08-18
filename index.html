@@ -1554,20 +1554,21 @@
 
         if (hairpin.deltaG >= -3.0) {
           return (
-            `${prefix}ただ、ΔGは${deltaGText} kcal/molであるため、` +
+            `Primer ${direction}の3'末端に対して、Primer内部に相補配列があり、ヘアピン形成の可能性があります。<br>` +
+            `ただし、ΔGは${deltaGText} kcal/molであるため、` +
             `<strong>大きく気にする必要はありません。</strong>`
           );
         }
 
         if (hairpin.deltaG > -9.0) {
           return (
-            `${prefix}ΔGは${deltaGText} kcal/molであり、` +
+            `${prefix}<br>ΔGは${deltaGText} kcal/molであり、` +
             `<strong>ヘアピン形成に注意した方がよいです。</strong>`
           );
         }
 
         return (
-          `${prefix}ΔGは${deltaGText} kcal/molであり、` +
+          `${prefix}<br>ΔGは${deltaGText} kcal/molであり、` +
           `<strong>ヘアピン形成に強く注意する必要があります。</strong>`
         );
       }
