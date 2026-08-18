@@ -751,6 +751,59 @@
     }
 
     /* ---------- Tm / reverse complement ---------- */
+    .tm-control-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 16px;
+      margin-top: 16px;
+      flex-wrap: nowrap;
+    }
+
+    .tm-concentration-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .tm-concentration-control label {
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .tm-concentration-control span {
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .tm-concentration-input {
+      width: 78px;
+      height: 44px;
+      padding: 0 9px;
+      background: #ffffff;
+      border-radius: var(--radius-sm);
+      text-align: center;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .tm-calculate-button {
+      flex: 1 1 auto;
+      width: auto;
+      min-width: 180px;
+      height: 44px;
+      margin-top: 0;
+      padding: 0 22px;
+      font-size: 15px;
+    }
+
     .tm-result-box,
     .complement-result-box {
       margin-top: 18px;
@@ -863,6 +916,20 @@
       .auto-primer-direction,
       .auto-primer-setting {
         margin-left: 0;
+      }
+
+      .tm-control-row {
+        align-items: stretch;
+        flex-wrap: wrap;
+      }
+
+      .tm-concentration-control {
+        flex: 1 1 auto;
+      }
+
+      .tm-calculate-button {
+        flex: 1 0 100%;
+        width: 100%;
       }
     }
     #result .primer-action-row .copy-button {
@@ -1162,8 +1229,7 @@
   <div class="tm-calculator-section">
     <h2 class="section-title">Tmを計算（最近接塩基対法）</h2>
     <p class="sequence-note">
-      TmとGC率を求めたい塩基配列を5'→3'で入力してください。入力した配列全体を用いて、
-      Primer濃度 0.5 µM、Na<sup>+</sup> 50 mMとしてTmを計算し、GC率も同時に表示します。
+      TmとGC率を求めたい塩基配列を5'→3'で入力してください。入力した配列全体と、設定したPrimer濃度・Na<sup>+</sup>濃度を用いてTmを計算し、GC率も同時に表示します。
     </p>
     <div class="input-with-count">    <textarea
       id="tmSequence"
@@ -1172,9 +1238,37 @@
     ></textarea>
       <div class="char-count" data-count-for="tmSequence">0文字</div>
     </div>
-    <button id="tmCalculateButton" class="secondary-button">
-      Tmを計算
-    </button>
+    <div class="tm-control-row">
+      <div class="tm-concentration-control">
+        <label for="tmPrimerConcentration">Primer濃度</label>
+        <input
+          type="number"
+          id="tmPrimerConcentration"
+          class="tm-concentration-input"
+          min="0.1"
+          step="0.1"
+          value="0.5"
+        >
+        <span>µM</span>
+      </div>
+
+      <div class="tm-concentration-control">
+        <label for="tmNaConcentration">Na<sup>+</sup>濃度</label>
+        <input
+          type="number"
+          id="tmNaConcentration"
+          class="tm-concentration-input"
+          min="1"
+          step="1"
+          value="50"
+        >
+        <span>mM</span>
+      </div>
+
+      <button id="tmCalculateButton" class="secondary-button tm-calculate-button">
+        Tmを計算
+      </button>
+    </div>
     <div id="tmResult"></div>
   </div>
 
@@ -1331,7 +1425,11 @@
         const gcCount = [...sequence].filter(isGC).length;
         return (gcCount / sequence.length) * 100;
       }
-      function calculateTm(sequence) {
+      function calculateTm(
+        sequence,
+        primerConcentrationM = PRIMER_CONC_M,
+        naConcentrationM = NA_CONC_M
+      ) {
         let deltaH = 0;
         let deltaS = 0;
         for (let i = 0; i < sequence.length - 1; i++) {
@@ -1343,11 +1441,15 @@
           deltaH += params.dH;
           deltaS += params.dS;
         }
-        const denominator = -10.8 + deltaS + 1.987 * Math.log(PRIMER_CONC_M / 4);
+        const denominator =
+          -10.8 +
+          deltaS +
+          1.987 * Math.log(primerConcentrationM / 4);
+
         return (
           (1000 * deltaH) / denominator
           - 273.15
-          + 16.6 * Math.log10(NA_CONC_M)
+          + 16.6 * Math.log10(naConcentrationM)
         );
       }
       function calculateTmSafe(sequence) {
@@ -2396,7 +2498,10 @@
       function handleTmCalculation() {
         const result = $("tmResult");
         const sequence = cleanSequence($("tmSequence").value);
+        const primerConcentrationUm = Number($("tmPrimerConcentration").value);
+        const naConcentrationMm = Number($("tmNaConcentration").value);
         const inputError = basicDNAError(sequence, "Tmを計算する塩基配列を入力してください。");
+
         if (inputError) {
           result.innerHTML = errorHtml(inputError);
           return;
@@ -2407,15 +2512,37 @@
           );
           return;
         }
-        const tm = calculateTm(sequence);
+        if (!Number.isFinite(primerConcentrationUm) || primerConcentrationUm <= 0) {
+          result.innerHTML = errorHtml(
+            "Primer濃度は0より大きい値で入力してください。"
+          );
+          return;
+        }
+        if (!Number.isFinite(naConcentrationMm) || naConcentrationMm <= 0) {
+          result.innerHTML = errorHtml(
+            "Na+濃度は0より大きい値で入力してください。"
+          );
+          return;
+        }
+
+        const primerConcentrationM = primerConcentrationUm * 1e-6;
+        const naConcentrationM = naConcentrationMm * 1e-3;
+        const tm = calculateTm(
+          sequence,
+          primerConcentrationM,
+          naConcentrationM
+        );
         const gcPercent = calculateGCPercent(sequence);
+
         result.innerHTML = `
           <div class="tm-result-box">
             <strong>Tm</strong>
             <div class="tm-result-number">${tm.toFixed(1)} °C</div>
             <div class="tm-result-meta">
               GC率：<strong>${gcPercent.toFixed(1)}%</strong> ／
-              配列長：${sequence.length} nt ／ Primer濃度：0.5 µM ／ Na<sup>+</sup>：50 mM
+              配列長：${sequence.length} nt ／
+              Primer濃度：${primerConcentrationUm} µM ／
+              Na<sup>+</sup>：${naConcentrationMm} mM
             </div>
           </div>`;
       }
