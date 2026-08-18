@@ -538,8 +538,7 @@
     /* ---------- 自動Primer ---------- */
     .auto-primer-section,
     .tm-calculator-section,
-    .complement-section,
-    .standalone-restriction-section {
+    .complement-section {
       margin-top: 38px;
       padding-top: 4px;
     }
@@ -622,8 +621,7 @@
       width: 100%;
       margin-top: 14px;
     }
-    .auto-restriction-control .auto-restriction-label,
-    .restriction-select-wrap .standalone-restriction-label {
+    .auto-restriction-control .auto-restriction-label {
       display: block;
       margin-bottom: 4px;
       color: var(--text);
@@ -635,8 +633,7 @@
       width: min(320px, 100%);
     }
 
-    .auto-restriction-note,
-    .standalone-restriction-note {
+    .auto-restriction-note {
       margin: -2px 0 14px;
       color: var(--muted);
       font-size: 13px;
@@ -644,8 +641,7 @@
       line-height: 1.7;
       white-space: nowrap;
     }
-    .auto-restriction-alert,
-    .standalone-restriction-alert {
+    .auto-restriction-alert {
       position: absolute;
       z-index: 40;
       top: calc(100% + 7px);
@@ -661,8 +657,7 @@
       font-weight: 600;
       line-height: 1.65;
     }
-    .auto-restriction-alert strong,
-    .standalone-restriction-alert strong {
+    .auto-restriction-alert strong {
       font-weight: 900;
     }
     .auto-primer-restriction-meta {
@@ -734,23 +729,6 @@
     .standalone-restriction-section {
       padding-top: 0;
     }
-    .restriction-controls {
-      display: grid;
-      grid-template-columns: minmax(190px, 280px) 1fr;
-      gap: 10px;
-      align-items: end;
-      margin-top: 14px;
-    }
-    .restriction-select-wrap label {
-      display: block;
-      margin-bottom: 6px;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 700;
-    }
-    .standalone-restriction-control {
-      position: relative;
-    }
     .restriction-select {
       width: 100%;
       height: 46px;
@@ -763,40 +741,6 @@
       font-size: 14px;
       font-weight: 700;
     }
-    .restriction-button {
-      height: 46px;
-      margin-top: 0;
-      padding-top: 0;
-      padding-bottom: 0;
-    }
-    .restriction-result-box {
-      margin-top: 16px;
-      padding: 16px 18px;
-      background: var(--primary-soft);
-      border: 1px solid #d9e0ff;
-      border-radius: var(--radius-md);
-    }
-    .restriction-output-row {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      margin-top: 8px;
-      max-width: 100%;
-    }
-    .restriction-output-sequence {
-      min-width: 0;
-      font-family:
-        "SFMono-Regular",
-        Consolas,
-        "Liberation Mono",
-        Menlo,
-        monospace;
-      font-size: 15px;
-      font-weight: 700;
-      line-height: 1.8;
-      letter-spacing: 0.03em;
-      word-break: break-all;
-    }
     .restriction-site-highlight {
       display: inline-block;
       padding: 0 3px;
@@ -804,12 +748,6 @@
       background: var(--danger-soft);
       border-radius: 4px;
       font-weight: 900;
-    }
-    .restriction-meta {
-      margin-top: 9px;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 700;
     }
 
     /* ---------- Tm / reverse complement ---------- */
@@ -919,8 +857,7 @@
       .primer-action-row {
         gap: 4px;
       }
-      .auto-primer-controls,
-      .restriction-controls {
+      .auto-primer-controls {
         grid-template-columns: 1fr;
       }
       .auto-primer-direction,
@@ -1219,48 +1156,6 @@
       設計
     </button>
     <div id="autoPrimerResult"></div>
-  </div>
-
-  <!-- 制限酵素サイト付加 -->
-  <div class="restriction-section standalone-restriction-section">
-    <h2 class="section-title">制限酵素サイト付加</h2>
-    <p class="sequence-note">
-      5'→3'の塩基配列を入力し、制限酵素を選択してください。
-      選択した制限酵素認識配列を入力配列の5'末端に付加します。
-    </p>
-    <div class="input-with-count">
-      <textarea
-        id="restrictionSequence"
-        class="tm-textarea"
-        placeholder="5' → 3' の塩基配列を入力してください&#10;例：ATGCGATCGATCGC"
-      ></textarea>
-      <div class="char-count" data-count-for="restrictionSequence">0文字</div>
-    </div>
-    <div class="restriction-controls">
-      <div id="standaloneRestrictionControl" class="restriction-select-wrap standalone-restriction-control" >
-        <label for="restrictionEnzyme" class="standalone-restriction-label" >
-          5'制限酵素サイト付加
-        </label>
-        <div class="standalone-restriction-note">
-          入力配列内に選択した制限酵素の認識配列が含まれる場合は、警告が表示されます。
-        </div>
-        <select id="restrictionEnzyme" class="restriction-select">
-          <option value="GGATCC" data-name="BamHI">BamHI — GGATCC</option>
-          <option value="AGATCT" data-name="BglII">BglII — AGATCT</option>
-          <option value="CATATG" data-name="NdeI">NdeI — CATATG</option>
-          <option value="GCGGCCGC" data-name="NotI">NotI — GCGGCCGC</option>
-          <option value="GTCGAC" data-name="SalI">SalI — GTCGAC</option>
-          <option value="CTGCAG" data-name="PstI">PstI — CTGCAG</option>
-          <option value="GAATTC" data-name="EcoRI">EcoRI — GAATTC</option>
-          <option value="AAGCTT" data-name="HindIII">HindIII — AAGCTT</option>
-        </select>
-        <div id="standaloneRestrictionAlert" class="standalone-restriction-alert" hidden ></div>
-      </div>
-      <button id="restrictionAddButton" type="button" class="secondary-button restriction-button" >
-        5'末端に付加
-      </button>
-    </div>
-    <div id="restrictionResult"></div>
   </div>
 
   <!-- 独立Tm計算 -->
@@ -2125,19 +2020,13 @@
          4. 自動Primer設計
       ====================================================== */
       const restrictionAlertDismissed = {
-        auto: false,
-        standalone: false
+        auto: false
       };
       const restrictionAlertConfig = {
         auto: {
           selectId: "autoRestrictionEnzyme",
           sequenceId: "autoPrimerSequence",
           alertId: "autoRestrictionAlert"
-        },
-        standalone: {
-          selectId: "restrictionEnzyme",
-          sequenceId: "restrictionSequence",
-          alertId: "standaloneRestrictionAlert"
         }
       };
       function getRestrictionSelection(selectId) {
@@ -2502,42 +2391,6 @@
       }
 
       /* ======================================================
-         5. 制限酵素サイト付加
-      ====================================================== */
-      function updateStandaloneRestrictionAlert(options = {}) {
-        updateRestrictionAlert("standalone", options);
-      }
-      function handleRestrictionSiteAddition() {
-        const result = $("restrictionResult");
-        const sequence = cleanSequence($("restrictionSequence").value);
-        const inputError = basicDNAError(
-          sequence,
-          "制限酵素サイトを付加する塩基配列を入力してください。"
-        );
-        if (inputError) {
-          result.innerHTML = errorHtml(inputError, "margin-top: 14px;");
-          return;
-        }
-        const selection = getRestrictionSelection("restrictionEnzyme");
-        const { site, enzymeName } = selection;
-        const combinedSequence = site + sequence;
-        result.innerHTML = `
-          <div class="restriction-result-box">
-            <strong>${enzymeName} siteを5'末端に付加</strong>
-            <div class="restriction-output-row">
-              <div class="restriction-output-sequence">
-                5' - <span class="restriction-site-highlight">${site}</span>${sequence} - 3'
-              </div>
-              ${copyButtonHtml(combinedSequence)}
-            </div>
-            <div class="restriction-meta">
-              認識配列：${site} ／ 元配列：${sequence.length} nt ／
-              付加後Length：${combinedSequence.length} nt
-            </div>
-          </div>`;
-      }
-
-      /* ======================================================
          6. Tm計算
       ====================================================== */
       function handleTmCalculation() {
@@ -2602,7 +2455,6 @@
       const COUNTED_INPUTS = [
         "sequence",
         "autoPrimerSequence",
-        "restrictionSequence",
         "tmSequence",
         "complementSequence"
       ];
@@ -2618,25 +2470,10 @@
       ====================================================== */
       $("designButton").addEventListener("click", handleMutationDesign);
       $("autoPrimerButton").addEventListener("click", handleAutoPrimerDesign);
-      $("restrictionAddButton").addEventListener("click", handleRestrictionSiteAddition);
       $("tmCalculateButton").addEventListener("click", handleTmCalculation);
       $("complementButton").addEventListener("click", handleReverseComplement);
       $("position").addEventListener("input", updateOriginalAA);
       $("sequence").addEventListener("input", updateOriginalAA);
-      $("restrictionEnzyme").addEventListener(
-        "change",
-        () => {
-          updateStandaloneRestrictionAlert({
-            resetDismissed: true
-          });
-        }
-      );
-      $("restrictionSequence").addEventListener(
-        "input",
-        () => {
-          updateStandaloneRestrictionAlert();
-        }
-      );
       $("autoRestrictionEnzyme").addEventListener(
         "change",
         () => {
@@ -2695,15 +2532,6 @@
         ) {
           autoRestrictionAlert.hidden = true;
           restrictionAlertDismissed.auto = true;
-        }
-        const standaloneRestrictionControl = $("standaloneRestrictionControl");
-        const standaloneRestrictionAlert = $("standaloneRestrictionAlert");
-        if (
-          !standaloneRestrictionAlert.hidden &&
-          !standaloneRestrictionControl.contains(event.target)
-        ) {
-          standaloneRestrictionAlert.hidden = true;
-          restrictionAlertDismissed.standalone = true;
         }
         const orderCopyButton = event.target.closest('[data-action="copy-order"]');
         if (orderCopyButton) {
