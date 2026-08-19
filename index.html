@@ -1402,137 +1402,275 @@
         return 0;
       }
 
-      const HAIRPIN_TEMPERATURE_K = 310.15;
-      const HAIRPIN_LOOP_DG37 = {
-        3: 3.4,
-        4: 3.4,
-        5: 3.5,
-        6: 4.2,
-        7: 4.2,
-        8: 4.2,
-        9: 4.3,
-        10: 4.4,
-        11: 4.5,
-        12: 4.6,
-        13: 4.7,
-        14: 4.8,
-        15: 5.0,
-        16: 5.1,
-        17: 5.2,
-        18: 5.3,
-        19: 5.4,
-        20: 5.5,
-        21: 5.6,
-        22: 5.7,
-        23: 5.8,
-        24: 5.9,
-        25: 6.0,
-        26: 6.1,
-        27: 6.2,
-        28: 6.3,
-        29: 6.4,
-        30: 6.5
+      /* ======================================================
+         Hairpin thermodynamics
+         - perfect Watson-Crick stem を全配列から探索
+         - SantaLucia unified DNA NN parameters
+         - loop initiation penalty
+         - Na+ correction
+         - 3'末端hairpinを別途識別
+
+         ΔG はスクリーニング用の概算値。
+         mismatch / bulge / terminal mismatch / special loop
+         は現在のモデルでは扱わない。
+      ====================================================== */
+
+      const HAIRPIN_TEMPERATURE_K = 310.15; // 37 °C
+
+      const HAIRPIN_NN_PARAMS = {
+        AA: { dH: -7.9, dS: -22.2 },
+        TT: { dH: -7.9, dS: -22.2 },
+        AT: { dH: -7.2, dS: -20.4 },
+        TA: { dH: -7.2, dS: -21.3 },
+        CA: { dH: -8.5, dS: -22.7 },
+        TG: { dH: -8.5, dS: -22.7 },
+        GT: { dH: -8.4, dS: -22.4 },
+        AC: { dH: -8.4, dS: -22.4 },
+        CT: { dH: -7.8, dS: -21.0 },
+        AG: { dH: -7.8, dS: -21.0 },
+        GA: { dH: -8.2, dS: -22.2 },
+        TC: { dH: -8.2, dS: -22.2 },
+        CG: { dH: -10.6, dS: -27.2 },
+        GC: { dH: -9.8, dS: -24.4 },
+        GG: { dH: -8.0, dS: -19.9 },
+        CC: { dH: -8.0, dS: -19.9 }
       };
 
-      function calculateStemDeltaG37(stem) {
+      const HAIRPIN_LOOP_DG37 = {
+        3: 3.4, 4: 3.4, 5: 3.5, 6: 4.2, 7: 4.2, 8: 4.2,
+        9: 4.3, 10: 4.4, 11: 4.5, 12: 4.6, 13: 4.7, 14: 4.8,
+        15: 5.0, 16: 5.1, 17: 5.2, 18: 5.3, 19: 5.4, 20: 5.5,
+        21: 5.6, 22: 5.7, 23: 5.8, 24: 5.9, 25: 6.0, 26: 6.1,
+        27: 6.2, 28: 6.3, 29: 6.4, 30: 6.5
+      };
+
+      function calculateHairpinStemDeltaG37(
+        stem,
+        naConcentrationM = NA_CONC_M
+      ) {
+        if (!stem || stem.length < 2) return null;
+
         let deltaH = 0;
         let deltaS = 0;
 
         for (let i = 0; i < stem.length - 1; i++) {
-          const params = NN_PARAMS[stem.slice(i, i + 2)];
+          const params = HAIRPIN_NN_PARAMS[stem.slice(i, i + 2)];
           if (!params) return null;
 
           deltaH += params.dH;
           deltaS += params.dS;
         }
 
-        return deltaH - HAIRPIN_TEMPERATURE_K * deltaS / 1000;
+        if (
+          Number.isFinite(naConcentrationM) &&
+          naConcentrationM > 0
+        ) {
+          deltaS +=
+            0.368 *
+            (stem.length - 1) *
+            Math.log(naConcentrationM);
+        }
+
+        return (
+          deltaH -
+          HAIRPIN_TEMPERATURE_K * deltaS / 1000
+        );
       }
 
       function hairpinLoopDeltaG37(loopLength) {
         if (loopLength < 3) return null;
-        if (loopLength <= 30) return HAIRPIN_LOOP_DG37[loopLength];
+        if (loopLength <= 30) {
+          return HAIRPIN_LOOP_DG37[loopLength];
+        }
 
-        const gasConstantKcal = 0.001987;
+        const R = 0.001987;
         return (
           HAIRPIN_LOOP_DG37[30] +
           1.75 *
-            gasConstantKcal *
+            R *
             HAIRPIN_TEMPERATURE_K *
             Math.log(loopLength / 30)
         );
       }
 
-      function findThreePrimeHairpin(primer, minStemLength = 3) {
+      function calculateHairpinDeltaG37(
+        stem,
+        loopLength,
+        naConcentrationM = NA_CONC_M
+      ) {
+        const stemDeltaG =
+          calculateHairpinStemDeltaG37(
+            stem,
+            naConcentrationM
+          );
+        const loopDeltaG =
+          hairpinLoopDeltaG37(loopLength);
+
+        if (
+          stemDeltaG === null ||
+          loopDeltaG === null
+        ) {
+          return null;
+        }
+
+        return stemDeltaG + loopDeltaG;
+      }
+
+      function findAllHairpins(
+        primer,
+        {
+          minStemLength = 3,
+          minLoopLength = 3,
+          naConcentrationM = NA_CONC_M
+        } = {}
+      ) {
+        const sequence = cleanSequence(primer);
+        if (!sequence || !isDNA(sequence)) return [];
+
         const candidates = [];
+        const n = sequence.length;
         const maxStemLength =
-          Math.floor((primer.length - 3) / 2);
+          Math.floor((n - minLoopLength) / 2);
 
         for (
           let stemLength = minStemLength;
           stemLength <= maxStemLength;
           stemLength++
         ) {
-          const threePrimeStem =
-            primer.slice(-stemLength);
-          const complementarySequence =
-            reverseComplement(threePrimeStem);
-          const stemStart =
-            primer.length - stemLength;
-
           for (
-            let matchStart = 0;
-            matchStart + stemLength <= stemStart - 3;
-            matchStart++
+            let leftStart = 0;
+            leftStart + stemLength + minLoopLength + stemLength <= n;
+            leftStart++
           ) {
-            if (
-              primer.slice(
-                matchStart,
-                matchStart + stemLength
-              ) !== complementarySequence
+            const leftEnd =
+              leftStart + stemLength;
+            const leftStem =
+              sequence.slice(leftStart, leftEnd);
+            const minimumRightStart =
+              leftEnd + minLoopLength;
+
+            for (
+              let rightStart = minimumRightStart;
+              rightStart + stemLength <= n;
+              rightStart++
             ) {
-              continue;
+              const rightEnd =
+                rightStart + stemLength;
+              const rightStem =
+                sequence.slice(rightStart, rightEnd);
+
+              if (
+                leftStem !==
+                reverseComplement(rightStem)
+              ) {
+                continue;
+              }
+
+              const loopLength =
+                rightStart - leftEnd;
+              const deltaG =
+                calculateHairpinDeltaG37(
+                  leftStem,
+                  loopLength,
+                  naConcentrationM
+                );
+
+              if (deltaG === null) continue;
+
+              candidates.push({
+                stemLength,
+                loopLength,
+                leftStart,
+                leftEnd,
+                rightStart,
+                rightEnd,
+                leftStem,
+                rightStem,
+                deltaG,
+                involvesThreePrime:
+                  rightEnd === n,
+                involvesFivePrime:
+                  leftStart === 0
+              });
             }
-
-            const loopLength =
-              stemStart -
-              (matchStart + stemLength);
-            const stemDeltaG =
-              calculateStemDeltaG37(threePrimeStem);
-            const loopDeltaG =
-              hairpinLoopDeltaG37(loopLength);
-
-            if (
-              stemDeltaG === null ||
-              loopDeltaG === null
-            ) {
-              continue;
-            }
-
-            candidates.push({
-              stemLength,
-              loopLength,
-              deltaG: stemDeltaG + loopDeltaG
-            });
           }
         }
 
-        if (!candidates.length) return null;
+        candidates.sort(
+          (a, b) => a.deltaG - b.deltaG
+        );
+        return candidates;
+      }
 
-        return candidates.reduce(
-          (best, candidate) =>
-            candidate.deltaG < best.deltaG
-              ? candidate
-              : best
+      function findMostStableHairpin(
+        primer,
+        options = {}
+      ) {
+        const candidates =
+          findAllHairpins(primer, options);
+
+        return candidates.length
+          ? candidates[0]
+          : null;
+      }
+
+      function findMostStableThreePrimeHairpin(
+        primer,
+        options = {}
+      ) {
+        const candidates =
+          findAllHairpins(
+            primer,
+            options
+          ).filter(
+            candidate =>
+              candidate.involvesThreePrime
+          );
+
+        return candidates.length
+          ? candidates[0]
+          : null;
+      }
+
+      function findThreePrimeHairpin(
+        primer,
+        minStemLength = 3
+      ) {
+        return findMostStableThreePrimeHairpin(
+          primer,
+          { minStemLength }
         );
       }
 
       function formatDeltaG(deltaG) {
-        const rounded = Math.abs(deltaG).toFixed(1);
+        const rounded =
+          Math.abs(deltaG).toFixed(1);
 
         if (deltaG < 0) return `−${rounded}`;
         if (deltaG > 0) return `+${rounded}`;
         return "0.0";
+      }
+
+      function hairpinSeverityText(deltaG) {
+        if (deltaG >= -3.0) {
+          return "";
+        }
+
+        if (deltaG > -6.0) {
+          return (
+            "<strong>ヘアピン形成に少し注意する必要があります。</strong>"
+          );
+        }
+
+        if (deltaG > -9.0) {
+          return (
+            "<strong>ヘアピン形成に注意する必要があります。</strong>"
+          );
+        }
+
+        return (
+          "<strong>ヘアピン形成に強く注意する必要があります。</strong>"
+        );
       }
 
       function primerPairComplementWarning(primerF, primerR) {
@@ -1543,34 +1681,69 @@
           : "";
       }
 
-      function primerSelfComplementWarning(primer, direction) {
-        const hairpin = findThreePrimeHairpin(primer);
-        if (!hairpin) return "";
+      /*
+        3'末端hairpinと内部hairpinの両方を評価する。
+        ΔG >= -3.0 kcal/mol のhairpinは警告対象外。
+      */
+      function primerSelfComplementWarning(
+        primer,
+        direction
+      ) {
+        const allHairpins =
+          findAllHairpins(primer).filter(
+            candidate =>
+              candidate.deltaG < -3.0
+          );
 
-        const deltaGText =
-          formatDeltaG(hairpin.deltaG);
-        const prefix =
-          `Primer ${direction}の3'末端に対して、Primer内部に相補配列があります。`;
+        if (!allHairpins.length) {
+          return "";
+        }
 
-        if (hairpin.deltaG >= -3.0) {
-          return (
+        const bestThreePrime =
+          allHairpins.find(
+            candidate =>
+              candidate.involvesThreePrime
+          ) ?? null;
+
+        const bestInternal =
+          allHairpins.find(
+            candidate =>
+              !candidate.involvesThreePrime
+          ) ?? null;
+
+        const messages = [];
+
+        if (bestThreePrime) {
+          const deltaGText =
+            formatDeltaG(
+              bestThreePrime.deltaG
+            );
+
+          messages.push(
             `Primer ${direction}の3'末端に対して、Primer内部に相補配列があり、ヘアピン形成の可能性があります。<br>` +
-            `ただし、ΔGは${deltaGText} kcal/molであるため、` +
-            `<strong>大きく気にする必要はありません。</strong>`
+            `ΔGは${deltaGText} kcal/molであり、` +
+            hairpinSeverityText(
+              bestThreePrime.deltaG
+            )
           );
         }
 
-        if (hairpin.deltaG > -9.0) {
-          return (
-            `${prefix}<br>ΔGは${deltaGText} kcal/molであり、` +
-            `<strong>ヘアピン形成に注意した方がよいです。</strong>`
+        if (bestInternal) {
+          const deltaGText =
+            formatDeltaG(
+              bestInternal.deltaG
+            );
+
+          messages.push(
+            `Primer ${direction}内部に相補配列があり、ヘアピン形成の可能性があります。<br>` +
+            `ΔGは${deltaGText} kcal/molであり、` +
+            hairpinSeverityText(
+              bestInternal.deltaG
+            )
           );
         }
 
-        return (
-          `${prefix}<br>ΔGは${deltaGText} kcal/molであり、` +
-          `<strong>ヘアピン形成に強く注意する必要があります。</strong>`
-        );
+        return messages.join("<br><br>");
       }
 
       function primerStructureWarnings(primerF, primerR) {
