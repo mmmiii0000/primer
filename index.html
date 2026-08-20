@@ -1124,7 +1124,7 @@
       <span>番目の</span>
       <input type="text" id="originalAA" class="aa-input" maxlength="1" placeholder="自動" >
       <span>残基を</span>
-      <input type="text" id="mutantAA" class="aa-input" maxlength="1" placeholder="G" >
+      <input type="text" id="mutantAA" class="aa-input" maxlength="1" placeholder="G" title="直接入力、またはマウスホイールで変更" >
       <span>に変換する。</span>
     </div>
     <div class="mutation-primer-setting mutation-five-prime-setting">
@@ -1363,6 +1363,10 @@
       const DNA_ERROR = "塩基配列にはA、T、G、Cのみ使用してください。";
       const COMPLEMENT = { A: "T", T: "A", G: "C", C: "G" };
       const STOP_CODONS = new Set(["TAA", "TAG", "TGA"]);
+      const AMINO_ACID_SCROLL_ORDER = [
+        "A", "C", "D", "E", "F", "G", "H", "I", "K", "L",
+        "M", "N", "P", "Q", "R", "S", "T", "V", "W", "Y"
+      ];
       const AA_TO_CODONS = Object.entries(CODON_TABLE).reduce((map, [codon, aa]) => {
         (map[aa] ??= []).push(codon);
         return map;
@@ -3053,6 +3057,31 @@
       $("complementButton").addEventListener("click", handleReverseComplement);
       $("position").addEventListener("input", updateOriginalAA);
       $("sequence").addEventListener("input", updateOriginalAA);
+
+      // 変異後アミノ酸は直接入力に加え、マウスホイールでも変更できる。
+      // 下スクロールでアルファベット順に次へ、上スクロールで前へ移動する。
+      $("mutantAA").addEventListener(
+        "wheel",
+        (event) => {
+          event.preventDefault();
+
+          const input = event.currentTarget;
+          const current = input.value.trim().toUpperCase();
+          const currentIndex = AMINO_ACID_SCROLL_ORDER.indexOf(current);
+          const direction = event.deltaY > 0 ? 1 : -1;
+          const baseIndex = currentIndex >= 0
+            ? currentIndex
+            : (direction > 0 ? -1 : 0);
+          const nextIndex =
+            (baseIndex + direction + AMINO_ACID_SCROLL_ORDER.length) %
+            AMINO_ACID_SCROLL_ORDER.length;
+
+          input.value = AMINO_ACID_SCROLL_ORDER[nextIndex];
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+        },
+        { passive: false }
+      );
+
       $("autoRestrictionEnzyme").addEventListener(
         "change",
         () => {
