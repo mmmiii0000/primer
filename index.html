@@ -690,6 +690,7 @@
     }
 
     .auto-restriction-control {
+      position: relative;
       width: 100%;
     }
 
@@ -768,12 +769,23 @@
       height: 18px;
       pointer-events: none;
     }
-    .auto-restriction-alert {
+    .auto-restriction-alerts {
       position: absolute;
       z-index: 40;
       top: calc(100% + 7px);
-      left: 0;
-      width: min(420px, 82vw);
+      right: 0;
+      display: flex;
+      justify-content: flex-end;
+      align-items: flex-start;
+      gap: 10px;
+      width: min(760px, calc(100vw - 48px));
+      pointer-events: none;
+    }
+
+    .auto-restriction-alert {
+      flex: 0 1 360px;
+      min-width: 0;
+      max-width: 360px;
       padding: 12px 14px;
       color: #8a5a00;
       background: #fff8e6;
@@ -783,6 +795,7 @@
       font-size: 12px;
       font-weight: 600;
       line-height: 1.65;
+      pointer-events: auto;
     }
     .auto-restriction-alert strong {
       font-weight: 900;
@@ -1274,6 +1287,20 @@
             font-size: 7.5px;
           }
         }
+
+    @media (max-width: 900px) {
+      .auto-restriction-alerts {
+        flex-direction: column;
+        align-items: flex-end;
+        width: min(420px, calc(100vw - 32px));
+      }
+
+      .auto-restriction-alert {
+        flex: 0 0 auto;
+        width: 100%;
+        max-width: 420px;
+      }
+    }
 </style>
 </head>
 <body>
@@ -1447,7 +1474,6 @@
               <option value="GAATTC" data-name="EcoRI">EcoRI — GAATTC</option>
               <option value="AAGCTT" data-name="HindIII">HindIII — AAGCTT</option>
             </select>
-            <div id="autoRestrictionAlertF" class="auto-restriction-alert" hidden></div>
           </div>
           <div id="autoRestrictionControlR" class="auto-restriction-side">
             <label for="autoRestrictionEnzymeR" class="auto-restriction-side-label">R</label>
@@ -1462,8 +1488,11 @@
               <option value="GAATTC" data-name="EcoRI">EcoRI — GAATTC</option>
               <option value="AAGCTT" data-name="HindIII">HindIII — AAGCTT</option>
             </select>
-            <div id="autoRestrictionAlertR" class="auto-restriction-alert" hidden></div>
           </div>
+        </div>
+        <div id="autoRestrictionAlerts" class="auto-restriction-alerts" aria-live="polite">
+          <div id="autoRestrictionAlertF" class="auto-restriction-alert" hidden></div>
+          <div id="autoRestrictionAlertR" class="auto-restriction-alert" hidden></div>
         </div>
       </div>
     </div>
@@ -3487,7 +3516,11 @@
         ["F", "R"].forEach((direction) => {
           const control = $(`autoRestrictionControl${direction}`);
           const alert = $(`autoRestrictionAlert${direction}`);
-          if (!alert.hidden && !control.contains(event.target)) {
+          if (
+            !alert.hidden &&
+            !control.contains(event.target) &&
+            !alert.contains(event.target)
+          ) {
             alert.hidden = true;
             restrictionAlertDismissed[direction] = true;
           }
