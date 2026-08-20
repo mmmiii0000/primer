@@ -229,7 +229,7 @@
     /* ---------- タンパク質名 / Codon Usage ---------- */
     .protein-codon-row {
       display: grid;
-      grid-template-columns: minmax(0, 1.55fr) minmax(260px, 0.85fr);
+      grid-template-columns: minmax(0, 1.45fr) minmax(340px, 0.95fr);
       gap: 16px;
       align-items: stretch;
     }
@@ -268,9 +268,9 @@
 
     .codon-usage-options {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 3px;
-      width: min(190px, 100%);
+      width: min(285px, 100%);
       padding: 3px;
       background: #eef2f7;
       border: 1px solid var(--line);
@@ -1190,7 +1190,7 @@
       }
 
       .codon-usage-options {
-        width: min(220px, 100%);
+        width: min(285px, 100%);
       }
     }
 
@@ -1283,6 +1283,8 @@
         <label for="codonUsageEcoli">E. coli</label>
         <input type="radio" id="codonUsageInsect" name="codonUsage" value="insect">
         <label for="codonUsageInsect">Insect</label>
+        <input type="radio" id="codonUsageYeast" name="codonUsage" value="yeast">
+        <label for="codonUsageYeast">Yeast</label>
       </div>
     </div>
   </div>
@@ -1502,6 +1504,27 @@
             GCT: 0.36, GCC: 0.30, GCA: 0.16, GCG: 0.18,
             GAT: 0.37, GAC: 0.63, GAA: 0.41, GAG: 0.59,
             GGT: 0.36, GGC: 0.32, GGA: 0.27, GGG: 0.05
+          }
+        },
+        yeast: {
+          label: "Yeast (P. pastoris)",
+          values: {
+            TTT: 0.56, TTC: 0.44,
+            TTA: 0.15, TTG: 0.33, CTT: 0.17, CTC: 0.08, CTA: 0.12, CTG: 0.16,
+            TCT: 0.29, TCC: 0.20, TCA: 0.19, TCG: 0.09, AGT: 0.15, AGC: 0.09,
+            TAT: 0.45, TAC: 0.55,
+            TAA: 0.53, TAG: 0.29, TGA: 0.18,
+            TGT: 0.65, TGC: 0.35, TGG: 1.00,
+            CCT: 0.35, CCC: 0.16, CCA: 0.40, CCG: 0.10,
+            CAT: 0.54, CAC: 0.46, CAA: 0.62, CAG: 0.38,
+            CGT: 0.16, CGC: 0.05, CGA: 0.11, CGG: 0.05, AGA: 0.47, AGG: 0.16,
+            ATT: 0.51, ATC: 0.31, ATA: 0.18, ATG: 1.00,
+            ACT: 0.40, ACC: 0.24, ACA: 0.25, ACG: 0.11,
+            AAT: 0.48, AAC: 0.52, AAA: 0.47, AAG: 0.53,
+            GTT: 0.42, GTC: 0.23, GTA: 0.16, GTG: 0.20,
+            GCT: 0.45, GCC: 0.25, GCA: 0.24, GCG: 0.06,
+            GAT: 0.59, GAC: 0.41, GAA: 0.58, GAG: 0.42,
+            GGT: 0.43, GGC: 0.14, GGA: 0.32, GGG: 0.10
           }
         }
       };
