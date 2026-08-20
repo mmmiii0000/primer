@@ -690,12 +690,43 @@
     }
 
     .auto-restriction-control {
-      position: relative;
       width: 100%;
+    }
+
+    .auto-restriction-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .auto-restriction-side {
+      position: relative;
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .auto-restriction-side-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      margin: 0;
+      color: var(--primary);
+      background: var(--primary-soft);
+      border: 1px solid #d9e0ff;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1;
     }
 
     .auto-restriction-control .restriction-select {
       width: 100%;
+      min-width: 0;
     }
 
     .auto-order-copy-bar {
@@ -1203,6 +1234,10 @@
         }
 
     @media (max-width: 860px) {
+          .auto-restriction-grid {
+            grid-template-columns: 1fr;
+          }
+
           .gene-expression-row {
             grid-template-columns: 1fr;
           }
@@ -1392,24 +1427,44 @@
       </div>
 
       <div id="autoRestrictionControl" class="auto-restriction-control auto-primer-meta-field">
-        <label for="autoRestrictionEnzyme" class="auto-restriction-label">
+        <div class="auto-restriction-label">
           5'制限酵素サイト付加
-        </label>
+        </div>
         <div class="auto-restriction-note">
           入力配列内に選択した制限酵素の認識配列が含まれる場合は、警告が表示されます。
         </div>
-        <select id="autoRestrictionEnzyme" class="restriction-select">
-          <option value="" data-name="">付加しない</option>
-          <option value="GGATCC" data-name="BamHI">BamHI — GGATCC</option>
-          <option value="AGATCT" data-name="BglII">BglII — AGATCT</option>
-          <option value="CATATG" data-name="NdeI">NdeI — CATATG</option>
-          <option value="GCGGCCGC" data-name="NotI">NotI — GCGGCCGC</option>
-          <option value="GTCGAC" data-name="SalI">SalI — GTCGAC</option>
-          <option value="CTGCAG" data-name="PstI">PstI — CTGCAG</option>
-          <option value="GAATTC" data-name="EcoRI">EcoRI — GAATTC</option>
-          <option value="AAGCTT" data-name="HindIII">HindIII — AAGCTT</option>
-        </select>
-        <div id="autoRestrictionAlert" class="auto-restriction-alert" hidden></div>
+        <div class="auto-restriction-grid">
+          <div id="autoRestrictionControlF" class="auto-restriction-side">
+            <label for="autoRestrictionEnzymeF" class="auto-restriction-side-label">F</label>
+            <select id="autoRestrictionEnzymeF" class="restriction-select">
+              <option value="" data-name="">付加しない</option>
+              <option value="GGATCC" data-name="BamHI">BamHI — GGATCC</option>
+              <option value="AGATCT" data-name="BglII">BglII — AGATCT</option>
+              <option value="CATATG" data-name="NdeI">NdeI — CATATG</option>
+              <option value="GCGGCCGC" data-name="NotI">NotI — GCGGCCGC</option>
+              <option value="GTCGAC" data-name="SalI">SalI — GTCGAC</option>
+              <option value="CTGCAG" data-name="PstI">PstI — CTGCAG</option>
+              <option value="GAATTC" data-name="EcoRI">EcoRI — GAATTC</option>
+              <option value="AAGCTT" data-name="HindIII">HindIII — AAGCTT</option>
+            </select>
+            <div id="autoRestrictionAlertF" class="auto-restriction-alert" hidden></div>
+          </div>
+          <div id="autoRestrictionControlR" class="auto-restriction-side">
+            <label for="autoRestrictionEnzymeR" class="auto-restriction-side-label">R</label>
+            <select id="autoRestrictionEnzymeR" class="restriction-select">
+              <option value="" data-name="">付加しない</option>
+              <option value="GGATCC" data-name="BamHI">BamHI — GGATCC</option>
+              <option value="AGATCT" data-name="BglII">BglII — AGATCT</option>
+              <option value="CATATG" data-name="NdeI">NdeI — CATATG</option>
+              <option value="GCGGCCGC" data-name="NotI">NotI — GCGGCCGC</option>
+              <option value="GTCGAC" data-name="SalI">SalI — GTCGAC</option>
+              <option value="CTGCAG" data-name="PstI">PstI — CTGCAG</option>
+              <option value="GAATTC" data-name="EcoRI">EcoRI — GAATTC</option>
+              <option value="AAGCTT" data-name="HindIII">HindIII — AAGCTT</option>
+            </select>
+            <div id="autoRestrictionAlertR" class="auto-restriction-alert" hidden></div>
+          </div>
+        </div>
       </div>
     </div>
     <button id="autoPrimerButton">
@@ -2811,13 +2866,19 @@
 
       /* ---------- 6. 自動Primer設計 ---------- */
       const restrictionAlertDismissed = {
-        auto: false
+        F: false,
+        R: false
       };
       const restrictionAlertConfig = {
-        auto: {
-          selectId: "autoRestrictionEnzyme",
+        F: {
+          selectId: "autoRestrictionEnzymeF",
           sequenceId: "autoPrimerSequence",
-          alertId: "autoRestrictionAlert"
+          alertId: "autoRestrictionAlertF"
+        },
+        R: {
+          selectId: "autoRestrictionEnzymeR",
+          sequenceId: "autoPrimerSequence",
+          alertId: "autoRestrictionAlertR"
         }
       };
       function getRestrictionSelection(selectId) {
@@ -2852,11 +2913,12 @@
         `;
         alert.hidden = restrictionAlertDismissed[kind];
       }
-      function getAutoRestrictionSelection() {
-        return getRestrictionSelection("autoRestrictionEnzyme");
+      function getAutoRestrictionSelection(direction) {
+        return getRestrictionSelection(`autoRestrictionEnzyme${direction}`);
       }
-      function updateAutoRestrictionAlert(options = {}) {
-        updateRestrictionAlert("auto", options);
+      function updateAutoRestrictionAlerts(options = {}) {
+        updateRestrictionAlert("F", options);
+        updateRestrictionAlert("R", options);
       }
       function createAutoPrimerState() {
         return {
@@ -2987,7 +3049,7 @@
         if (!candidate) {
           return "";
         }
-        const restriction = getAutoRestrictionSelection();
+        const restriction = getAutoRestrictionSelection(direction);
         const outputSequence = restriction ? restriction.site + candidate.sequence : candidate.sequence;
         const outputSequenceHtml =
           restriction
@@ -3152,7 +3214,7 @@
         const candidate = state.candidates[state.currentIndex];
         if (!candidate || state.error) return null;
 
-        const restriction = getAutoRestrictionSelection();
+        const restriction = getAutoRestrictionSelection(direction);
         return {
           direction,
           sequence: restriction
@@ -3393,20 +3455,22 @@
         { passive: false }
       );
 
-      $("autoRestrictionEnzyme").addEventListener(
-        "change",
-        () => {
-          updateAutoRestrictionAlert({
-            resetDismissed: true
-          });
-          renderAutoPrimer();
-        }
-      );
+      ["F", "R"].forEach((direction) => {
+        $(`autoRestrictionEnzyme${direction}`).addEventListener(
+          "change",
+          () => {
+            updateRestrictionAlert(direction, {
+              resetDismissed: true
+            });
+            renderAutoPrimer();
+          }
+        );
+      });
       $("autoPrimerSequence").addEventListener(
         "input",
         () => {
           syncFastaGeneName("autoPrimer");
-          updateAutoRestrictionAlert();
+          updateAutoRestrictionAlerts();
         }
       );
       mutationPrimerControl.bind();
@@ -3420,15 +3484,14 @@
         document.querySelectorAll(".notice-details[open]").forEach((details) => {
           if (!details.contains(event.target)) details.removeAttribute("open");
         });
-        const autoRestrictionControl = $("autoRestrictionControl");
-        const autoRestrictionAlert = $("autoRestrictionAlert");
-        if (
-          !autoRestrictionAlert.hidden &&
-          !autoRestrictionControl.contains(event.target)
-        ) {
-          autoRestrictionAlert.hidden = true;
-          restrictionAlertDismissed.auto = true;
-        }
+        ["F", "R"].forEach((direction) => {
+          const control = $(`autoRestrictionControl${direction}`);
+          const alert = $(`autoRestrictionAlert${direction}`);
+          if (!alert.hidden && !control.contains(event.target)) {
+            alert.hidden = true;
+            restrictionAlertDismissed[direction] = true;
+          }
+        });
         const autoOrderCopyButton = event.target.closest('[data-action="copy-auto-order"]');
         if (autoOrderCopyButton) {
           handleAutoOrderCopy(autoOrderCopyButton);
