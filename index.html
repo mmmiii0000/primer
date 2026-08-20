@@ -226,14 +226,89 @@
       font-weight: 800;
       text-align: center;
     }
+    /* ---------- タンパク質名 / Codon Usage ---------- */
+    .protein-codon-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.55fr) minmax(260px, 0.85fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+
     .protein-name-input {
       width: 100%;
-      height: 46px;
+      height: 50px;
       padding: 0 14px;
       background: var(--surface-soft);
       border-radius: var(--radius-md);
       font-size: 14px;
       font-weight: 700;
+    }
+
+    .codon-usage-control {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-width: 0;
+      height: 50px;
+      padding: 6px 7px 6px 14px;
+      background: var(--surface-soft);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+    }
+
+    .codon-usage-label {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .codon-usage-options {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 3px;
+      width: min(190px, 100%);
+      padding: 3px;
+      background: #eef2f7;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+
+    .codon-usage-options input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .codon-usage-options label {
+      min-width: 0;
+      padding: 7px 10px;
+      border-radius: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.2;
+      text-align: center;
+      white-space: nowrap;
+      cursor: pointer;
+      transition:
+        color 0.15s ease,
+        background-color 0.15s ease,
+        box-shadow 0.15s ease;
+    }
+
+    .codon-usage-options input:checked + label {
+      color: #ffffff;
+      background: var(--primary);
+      box-shadow: 0 3px 8px rgba(49, 87, 213, 0.22);
+    }
+
+    .codon-usage-options input:focus-visible + label {
+      outline: 3px solid rgba(49, 87, 213, 0.18);
+      outline-offset: 2px;
     }
     button {
       width: 100%;
@@ -931,21 +1006,32 @@
       height: 15px;
     }
 
-    @media (max-width: 760px) {
+    @media (max-width: 900px) {
       #result .primer-action-row {
-        gap: 2px;
-        flex-wrap: nowrap;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        width: 100%;
+        max-width: 100%;
+        white-space: normal;
       }
       #result .extend-button {
-        padding: 4px 3px;
-        font-size: 7.5px;
+        width: 100%;
+        max-width: 88px;
+        min-width: 0;
+        padding: 5px 4px;
+        font-size: 8px;
+        line-height: 1.25;
         letter-spacing: -0.03em;
+        white-space: normal;
+        overflow-wrap: anywhere;
       }
       #result .primer-action-row .copy-button {
         width: 22px;
         height: 22px;
         min-width: 22px;
-        flex-basis: 22px;
+        flex: 0 0 22px;
         border-radius: 6px;
       }
       #result .primer-action-row .copy-button svg {
@@ -1076,9 +1162,35 @@
       font-weight: 700;
     }
 
-    @media (max-width: 760px) {
+    @media (max-width: 900px) {
       .notice-popover {
         width: min(340px, 82vw);
+      }
+
+      #result .mutation-no-with-warning {
+        flex-direction: column;
+        gap: 3px;
+        white-space: normal;
+      }
+
+      #result .mutation-no-with-warning .notice-details {
+        display: block;
+        margin: 0 auto;
+      }
+    }
+
+    @media (max-width: 860px) {
+      .protein-codon-row {
+        grid-template-columns: 1fr;
+      }
+
+      .codon-usage-control {
+        height: auto;
+        min-height: 50px;
+      }
+
+      .codon-usage-options {
+        width: min(220px, 100%);
       }
     }
 
@@ -1124,7 +1236,7 @@
       <span>番目の</span>
       <input type="text" id="originalAA" class="aa-input" maxlength="1" placeholder="自動" >
       <span>残基を</span>
-      <input type="text" id="mutantAA" class="aa-input" maxlength="1" placeholder="G" title="直接入力、またはマウスホイールで変更" >
+      <input type="text" id="mutantAA" class="aa-input" maxlength="1" placeholder="G" >
       <span>に変換する。</span>
     </div>
     <div class="mutation-primer-setting mutation-five-prime-setting">
@@ -1149,13 +1261,32 @@
         Primer R：Primer Fと同様の操作を、相補鎖（reverse complement）に対して行います。<br>
         Tm：最近接塩基対法で計算します（Primer濃度 0.5 µM、Na<sup>+</sup> 50 mM）。Primer F / Rともに、変異コドン自体は含めず、<strong>変異コドンより3'側の配列のみ</strong>をTm計算に使用します。<br>
         Length：<strong>プライマー全長 / 変異コドンより3'側</strong>の塩基数を表示します。<br>
-        Codon Usage：大腸菌の値を用いています。
+        Codon Usage：選択した生物の値を用いて、変異コドン候補の優先順位とCodon usageを計算します。
     </p>
   <h2>タンパク質名を入力（任意）</h2>
   <p class="sequence-note">
     タンパク質名を入力すると、注文用コピー時のPrimer名にタンパク質名を含めることができます。
   </p>
-  <input type="text" id="proteinName" class="protein-name-input" placeholder="例：XxxA" autocomplete="off" >
+  <div class="protein-codon-row">
+    <input
+      type="text"
+      id="proteinName"
+      class="protein-name-input"
+      placeholder="例：XxxA"
+      autocomplete="off"
+    >
+
+    <div class="codon-usage-control" aria-label="Codon Usage">
+      <span class="codon-usage-label">Codon Usage</span>
+      <div class="codon-usage-options">
+        <input type="radio" id="codonUsageEcoli" name="codonUsage" value="ecoli" checked>
+        <label for="codonUsageEcoli">E. coli</label>
+        <input type="radio" id="codonUsageInsect" name="codonUsage" value="insect">
+        <label for="codonUsageInsect">Insect</label>
+      </div>
+    </div>
+  </div>
+
   <button id="designButton">
     プライマーを設計
   </button>
@@ -1330,23 +1461,49 @@
         GAT: "D", GAC: "D", GAA: "E", GAG: "E",
         GGT: "G", GGC: "G", GGA: "G", GGG: "G"
       };
-      const CODON_USAGE = {
-        TTT: 0.57, TTC: 0.43,
-        TTA: 0.15, TTG: 0.12, CTT: 0.12, CTC: 0.10, CTA: 0.05, CTG: 0.46,
-        TCT: 0.11, TCC: 0.11, TCA: 0.15, TCG: 0.16, AGT: 0.14, AGC: 0.33,
-        TAT: 0.53, TAC: 0.47,
-        TAA: 0.64, TAG: 0.00, TGA: 0.36,
-        TGT: 0.42, TGC: 0.58, TGG: 1.00,
-        CCT: 0.17, CCC: 0.13, CCA: 0.14, CCG: 0.55,
-        CAT: 0.55, CAC: 0.45, CAA: 0.30, CAG: 0.70,
-        CGT: 0.36, CGC: 0.44, CGA: 0.07, CGG: 0.07, AGA: 0.02, AGG: 0.03,
-        ATT: 0.58, ATC: 0.35, ATA: 0.07, ATG: 1.00,
-        ACT: 0.16, ACC: 0.47, ACA: 0.13, ACG: 0.24,
-        AAT: 0.47, AAC: 0.53, AAA: 0.73, AAG: 0.27,
-        GTT: 0.25, GTC: 0.18, GTA: 0.17, GTG: 0.40,
-        GCT: 0.11, GCC: 0.31, GCA: 0.21, GCG: 0.38,
-        GAT: 0.65, GAC: 0.35, GAA: 0.70, GAG: 0.30,
-        GGT: 0.29, GGC: 0.46, GGA: 0.13, GGG: 0.12
+      const CODON_USAGE_PROFILES = {
+        ecoli: {
+          label: "E. coli",
+          values: {
+            TTT: 0.57, TTC: 0.43,
+            TTA: 0.15, TTG: 0.12, CTT: 0.12, CTC: 0.10, CTA: 0.05, CTG: 0.46,
+            TCT: 0.11, TCC: 0.11, TCA: 0.15, TCG: 0.16, AGT: 0.14, AGC: 0.33,
+            TAT: 0.53, TAC: 0.47,
+            TAA: 0.64, TAG: 0.00, TGA: 0.36,
+            TGT: 0.42, TGC: 0.58, TGG: 1.00,
+            CCT: 0.17, CCC: 0.13, CCA: 0.14, CCG: 0.55,
+            CAT: 0.55, CAC: 0.45, CAA: 0.30, CAG: 0.70,
+            CGT: 0.36, CGC: 0.44, CGA: 0.07, CGG: 0.07, AGA: 0.02, AGG: 0.03,
+            ATT: 0.58, ATC: 0.35, ATA: 0.07, ATG: 1.00,
+            ACT: 0.16, ACC: 0.47, ACA: 0.13, ACG: 0.24,
+            AAT: 0.47, AAC: 0.53, AAA: 0.73, AAG: 0.27,
+            GTT: 0.25, GTC: 0.18, GTA: 0.17, GTG: 0.40,
+            GCT: 0.11, GCC: 0.31, GCA: 0.21, GCG: 0.38,
+            GAT: 0.65, GAC: 0.35, GAA: 0.70, GAG: 0.30,
+            GGT: 0.29, GGC: 0.46, GGA: 0.13, GGG: 0.12
+          }
+        },
+        insect: {
+          label: "Insect",
+          values: {
+            TTT: 0.25, TTC: 0.75,
+            TTA: 0.07, TTG: 0.20, CTT: 0.13, CTC: 0.22, CTA: 0.08, CTG: 0.31,
+            TCT: 0.19, TCC: 0.24, TCA: 0.16, TCG: 0.12, AGT: 0.12, AGC: 0.17,
+            TAT: 0.25, TAC: 0.75,
+            TAA: 0.68, TAG: 0.15, TGA: 0.17,
+            TGT: 0.35, TGC: 0.65, TGG: 1.00,
+            CCT: 0.29, CCC: 0.31, CCA: 0.24, CCG: 0.16,
+            CAT: 0.32, CAC: 0.68, CAA: 0.39, CAG: 0.61,
+            CGT: 0.25, CGC: 0.24, CGA: 0.08, CGG: 0.05, AGA: 0.16, AGG: 0.21,
+            ATT: 0.29, ATC: 0.59, ATA: 0.12, ATG: 1.00,
+            ACT: 0.27, ACC: 0.36, ACA: 0.21, ACG: 0.16,
+            AAT: 0.29, AAC: 0.71, AAA: 0.31, AAG: 0.69,
+            GTT: 0.20, GTC: 0.30, GTA: 0.15, GTG: 0.35,
+            GCT: 0.36, GCC: 0.30, GCA: 0.16, GCG: 0.18,
+            GAT: 0.37, GAC: 0.63, GAA: 0.41, GAG: 0.59,
+            GGT: 0.36, GGC: 0.32, GGA: 0.27, GGG: 0.05
+          }
+        }
       };
       const NN_PARAMS = {
         AA: { dH: -9.1, dS: -24.0 }, TT: { dH: -9.1, dS: -24.0 },
@@ -1686,7 +1843,7 @@
         const length = threePrimeComplementLength(primerF, primerR);
 
         return length >= 3
-          ? `Primer F / Rの3'末端に${length}塩基の連続した相補性があります。プライマーダイマーが生じる可能性があります。`
+          ? `Primer F / Rの3'末端に${length}塩基の連続した相補的な配列があります。プライマーダイマーが生じる可能性があります。`
           : "";
       }
 
@@ -1779,14 +1936,28 @@
         if (!sequence) return emptyMessage;
         return isDNA(sequence) ? "" : DNA_ERROR;
       }
-      function mutationCodonScore(originalCodon, mutantCodon) {
-        const changes = countBaseChanges(originalCodon, mutantCodon);
-        return changes === 0 ? Infinity : CODON_USAGE[mutantCodon] / changes;
+      function getSelectedCodonUsageProfile() {
+        const selectedKey = document.querySelector(
+          'input[name="codonUsage"]:checked'
+        )?.value ?? "ecoli";
+
+        return CODON_USAGE_PROFILES[selectedKey] ?? CODON_USAGE_PROFILES.ecoli;
       }
-      function sortMutationCodons(codons, originalCodon) {
+
+      function mutationCodonScore(originalCodon, mutantCodon, codonUsage) {
+        const changes = countBaseChanges(originalCodon, mutantCodon);
+        return changes === 0
+          ? Infinity
+          : codonUsage[mutantCodon] / changes;
+      }
+
+      function sortMutationCodons(codons, originalCodon, codonUsage) {
         return [...codons].sort((a, b) => {
-          const scoreDifference = mutationCodonScore(originalCodon, b) - mutationCodonScore(originalCodon, a);
-          return scoreDifference || CODON_USAGE[b] - CODON_USAGE[a];
+          const scoreDifference =
+            mutationCodonScore(originalCodon, b, codonUsage) -
+            mutationCodonScore(originalCodon, a, codonUsage);
+
+          return scoreDifference || codonUsage[b] - codonUsage[a];
         });
       }
       function codingSequenceWarnings(sequence, codingStart) {
@@ -2448,6 +2619,8 @@
         const mutantAA = $("mutantAA").value.trim().toUpperCase();
         const primerSetting = mutationPrimerControl.read();
         const fivePrimeBases = Number($("mutationPrimerFivePrimeBases").value);
+        const codonUsageProfile = getSelectedCodonUsageProfile();
+        const codonUsage = codonUsageProfile.values;
         result.innerHTML = "";
         mutationState.rows.clear();
         mutationState.variantCounts.clear();
@@ -2482,7 +2655,11 @@
             `コドン：${originalCodon}`
           );
         }
-        const candidateCodons = sortMutationCodons(AA_TO_CODONS[mutantAA], originalCodon);
+        const candidateCodons = sortMutationCodons(
+          AA_TO_CODONS[mutantAA],
+          originalCodon,
+          codonUsage
+        );
         const warnings = new Set(codingSequenceWarnings(sequence, codingStart));
         const rows = [];
         candidateCodons.forEach((mutantCodon, index) => {
@@ -2503,7 +2680,7 @@
             displayNo: String(rootNo),
             mutantCodon,
             mutationCode: `${detectedAA}${position}${mutantAA}`,
-            usagePercent: Math.round(CODON_USAGE[mutantCodon] * 100),
+            usagePercent: Math.round(codonUsage[mutantCodon] * 100),
             baseChanges: countBaseChanges(originalCodon, mutantCodon)
           };
           mutationState.rows.set(rowId, rowData);
@@ -2524,6 +2701,7 @@
               ${mutationWarningHtml}
             </span><br>
             <strong>元のコドン：</strong>${originalCodon}<br>
+            <strong>Codon Usage：</strong>${codonUsageProfile.label}<br>
             <strong>変異後コドン候補：</strong>${candidateCodons.join(", ")}
           </div>
           <table>
@@ -3052,6 +3230,13 @@
          9. イベント設定
       ====================================================== */
       $("designButton").addEventListener("click", handleMutationDesign);
+      document
+        .querySelectorAll('input[name="codonUsage"]')
+        .forEach((radio) => {
+          radio.addEventListener("change", () => {
+            if (mutationState.rows.size > 0) handleMutationDesign();
+          });
+        });
       $("autoPrimerButton").addEventListener("click", handleAutoPrimerDesign);
       $("tmCalculateButton").addEventListener("click", handleTmCalculation);
       $("complementButton").addEventListener("click", handleReverseComplement);
