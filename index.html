@@ -1127,6 +1127,11 @@
       <input type="text" id="mutantAA" class="aa-input" maxlength="1" placeholder="G" >
       <span>に変換する。</span>
     </div>
+    <div class="mutation-primer-setting mutation-five-prime-setting">
+      <span class="mutation-setting-label">5'側：</span>
+      <input type="number" id="mutationPrimerFivePrimeBases" class="mutation-target-input" min="1" step="1" value="6" >
+      <span class="mutation-target-unit">塩基</span>
+    </div>
     <div class="mutation-primer-setting">
       <span class="mutation-setting-label">3'側：</span>
       <div class="mutation-primer-mode" aria-label="3'側の設計基準">
@@ -1140,7 +1145,7 @@
     </div>
   </div>
    <p class="sequence-note"><br>
-        Primer F：変異コドンに加えて、5'側6塩基と、選択した条件に基づく3'側配列を含めたプライマーを作成します。<br>
+        Primer F：変異コドンに加えて、指定した塩基数の5'側配列と、選択した条件に基づく3'側配列を含めたプライマーを作成します。<br>
         Primer R：Primer Fと同様の操作を、相補鎖（reverse complement）に対して行います。<br>
         Tm：最近接塩基対法で計算します（Primer濃度 0.5 µM、Na<sup>+</sup> 50 mM）。Primer F / Rともに、変異コドン自体は含めず、<strong>変異コドンより3'側の配列のみ</strong>をTm計算に使用します。<br>
         Length：<strong>プライマー全長 / 変異コドンより3'側</strong>の塩基数を表示します。<br>
@@ -2007,7 +2012,8 @@
         originalSequence,
         codonStart,
         mutantCodon,
-        setting
+        setting,
+        fivePrimeBases
       ) {
         const warnings = [];
         const mutatedSequence =
@@ -2017,14 +2023,14 @@
         const mutationEnd = codonStart + 3;
         /*
           Primer F:
-          5'側は従来どおり6塩基。
+          5'側は指定した塩基数。
           3'側は、指定した塩基数またはTmに従ってG/C終端候補を選ぶ。
         */
-        const desiredForwardStart = codonStart - 6;
+        const desiredForwardStart = codonStart - fivePrimeBases;
         const forwardStart = Math.max(0, desiredForwardStart);
         if (desiredForwardStart < 0) {
           warnings.push(
-            "Primer F：変異コドンの5'側6塩基を確保できないため、配列の5'末端から作成しています。"
+            `Primer F：変異コドンの5'側${fivePrimeBases}塩基を確保できないため、配列の5'末端から作成しています。`
           );
         }
         const forwardCandidates = buildForward3PrimeCandidates(mutatedSequence, mutationEnd);
@@ -2060,14 +2066,14 @@
         const mutationStartF = codonStart - forwardStart;
         /*
           Primer R:
-          reverse complement後の5'側は従来どおり6塩基。
+          reverse complement後の5'側は指定した塩基数。
           Primerの3'側に相当するcoding strand上流側から候補を選ぶ。
         */
-        const desiredReverseEnd = mutationEnd + 6;
+        const desiredReverseEnd = mutationEnd + fivePrimeBases;
         const reverseEnd = Math.min(mutatedSequence.length, desiredReverseEnd);
         if (desiredReverseEnd > mutatedSequence.length) {
           warnings.push(
-            "Primer R：変異コドンの5'側6塩基を確保できないため、配列の3'末端までで作成しています。"
+            `Primer R：変異コドンの5'側${fivePrimeBases}塩基を確保できないため、配列の3'末端までで作成しています。`
           );
         }
         const reverseCandidates = buildReverse3PrimeCandidates(mutatedSequence, codonStart);
@@ -2437,6 +2443,7 @@
         const originalAA = $("originalAA").value.trim().toUpperCase();
         const mutantAA = $("mutantAA").value.trim().toUpperCase();
         const primerSetting = mutationPrimerControl.read();
+        const fivePrimeBases = Number($("mutationPrimerFivePrimeBases").value);
         result.innerHTML = "";
         mutationState.rows.clear();
         mutationState.variantCounts.clear();
@@ -2454,6 +2461,9 @@
         if (!Number.isInteger(position) || position < 1) return fail("残基番号を正しく入力してください。");
         if (originalAA && !AA_TO_CODONS[originalAA]) return fail("元のアミノ酸を1文字表記で入力してください。");
         if (!AA_TO_CODONS[mutantAA]) return fail("変異後のアミノ酸を1文字表記で入力してください。");
+        if (!Number.isInteger(fivePrimeBases) || fivePrimeBases < 1) {
+          return fail("5'側の塩基数は1以上の整数で入力してください。");
+        }
         if (primerSetting.error) return fail(primerSetting.error);
         const codonStart = getCodonStart(position, codingStart);
         if (codonStart + 3 > sequence.length) {
@@ -2472,7 +2482,13 @@
         const warnings = new Set(codingSequenceWarnings(sequence, codingStart));
         const rows = [];
         candidateCodons.forEach((mutantCodon, index) => {
-          const pair = createPrimerPair(sequence, codonStart, mutantCodon, primerSetting);
+          const pair = createPrimerPair(
+            sequence,
+            codonStart,
+            mutantCodon,
+            primerSetting,
+            fivePrimeBases
+          );
           pair.warnings.forEach((warning) => warnings.add(warning));
           const rootNo = index + 1;
           const rowId = `primer-row-${rootNo}`;
