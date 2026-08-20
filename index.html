@@ -231,7 +231,20 @@
       display: grid;
       grid-template-columns: minmax(0, 1.45fr) minmax(340px, 0.95fr);
       gap: 16px;
-      align-items: stretch;
+      align-items: start;
+      margin-top: 32px;
+    }
+
+    .protein-codon-field {
+      min-width: 0;
+    }
+
+    .protein-codon-field h2 {
+      margin: 0 0 12px;
+    }
+
+    .protein-codon-field .sequence-note {
+      margin-bottom: 14px;
     }
 
     .protein-name-input {
@@ -247,30 +260,19 @@
     .codon-usage-control {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 12px;
       min-width: 0;
       height: 50px;
-      padding: 6px 7px 6px 14px;
+      padding: 6px;
       background: var(--surface-soft);
       border: 1px solid var(--line);
       border-radius: var(--radius-md);
-    }
-
-    .codon-usage-label {
-      flex: 0 0 auto;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 800;
-      line-height: 1.2;
-      white-space: nowrap;
     }
 
     .codon-usage-options {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 3px;
-      width: min(285px, 100%);
+      width: 100%;
       padding: 3px;
       background: #eef2f7;
       border: 1px solid var(--line);
@@ -1185,12 +1187,7 @@
       }
 
       .codon-usage-control {
-        height: auto;
-        min-height: 50px;
-      }
-
-      .codon-usage-options {
-        width: min(285px, 100%);
+        height: 50px;
       }
     }
 
@@ -1263,28 +1260,33 @@
         Length：<strong>プライマー全長 / 変異コドンより3'側</strong>の塩基数を表示します。<br>
         Codon Usage：選択した生物の値を用いて、変異コドン候補の優先順位とCodon usageを計算します。
     </p>
-  <h2>タンパク質名を入力（任意）</h2>
-  <p class="sequence-note">
-    タンパク質名を入力すると、注文用コピー時のPrimer名にタンパク質名を含めることができます。
-  </p>
   <div class="protein-codon-row">
-    <input
-      type="text"
-      id="proteinName"
-      class="protein-name-input"
-      placeholder="例：XxxA"
-      autocomplete="off"
-    >
+    <div class="protein-codon-field">
+      <h2>タンパク質名を入力（任意）</h2>
+      <p class="sequence-note">
+        タンパク質名を入力すると、注文用コピー時のPrimer名にタンパク質名を含めることができます。
+      </p>
+      <input
+        type="text"
+        id="proteinName"
+        class="protein-name-input"
+        placeholder="例：XxxA"
+        autocomplete="off"
+      >
+    </div>
 
-    <div class="codon-usage-control" aria-label="Codon Usage">
-      <span class="codon-usage-label">Codon Usage</span>
-      <div class="codon-usage-options">
-        <input type="radio" id="codonUsageEcoli" name="codonUsage" value="ecoli" checked>
-        <label for="codonUsageEcoli">E. coli</label>
-        <input type="radio" id="codonUsageInsect" name="codonUsage" value="insect">
-        <label for="codonUsageInsect">Insect</label>
-        <input type="radio" id="codonUsageYeast" name="codonUsage" value="yeast">
-        <label for="codonUsageYeast">Yeast</label>
+    <div class="protein-codon-field">
+      <h2>Codon Usage</h2>
+      <p class="sequence-note">使用する発現系を選択してください。</p>
+      <div class="codon-usage-control" aria-label="Codon Usage">
+        <div class="codon-usage-options">
+          <input type="radio" id="codonUsageEcoli" name="codonUsage" value="ecoli" checked>
+          <label for="codonUsageEcoli">E. coli</label>
+          <input type="radio" id="codonUsageInsect" name="codonUsage" value="insect">
+          <label for="codonUsageInsect">Insect</label>
+          <input type="radio" id="codonUsageYeast" name="codonUsage" value="yeast">
+          <label for="codonUsageYeast">Yeast</label>
+        </div>
       </div>
     </div>
   </div>
